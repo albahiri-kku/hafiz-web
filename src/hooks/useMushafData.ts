@@ -60,10 +60,11 @@ export function useMushafData(pageNumber: number) {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
-      .then((json: any[]) => {
+      .then((json: any) => {
+        const rawLines: any[] = Array.isArray(json) ? json : (json.lines || []);
         const transformed: MushafPageData = {
           page: pageNumber,
-          lines: json.map((line: any) => ({
+          lines: rawLines.map((line: any) => ({
             line: line.line,
             type:
               line.type === 'surah-header' ? 'surah-header' :
