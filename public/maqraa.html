@@ -7,8 +7,6 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:wght@400;700&family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
 <style>
 :root {
   --emerald: #059669;
@@ -41,10 +39,7 @@ body { background: var(--slate-bg); color: var(--text); transition: background .
 /* Mushaf Font */
 @font-face {
   font-family: 'KFGQPC';
-  src: url('https://cdn.jsdelivr.net/gh/mustafa0x/qpc-fonts@master/fonts/QCF_P001.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
+  src: url('https://fonts.qurancomplex.gov.sa/wp-content/uploads/2019/09/UthmanicHafs1Ver09.otf') format('opentype');
 }
 .font-mushaf { font-family: 'KFGQPC', 'Amiri Quran', 'Amiri', serif; }
 
@@ -175,18 +170,19 @@ body { background: var(--slate-bg); color: var(--text); transition: background .
 .dark .ring-bg { stroke:#334155; }
 .ring-fill { stroke:#059669; stroke-linecap:round; transition:stroke-dashoffset .6s ease; }
 
-/* Auth overlay */
-#auth-overlay { display:flex; }
-#auth-overlay.hidden { display:none; }
+/* Sidebar */
+#sidebar {
+  transform: translateX(110%);
+  transition: transform .3s ease;
+}
+#sidebar.open { transform: translateX(0); }
 
-/* Modal */
-.modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem; }
-.modal-overlay.hidden { display:none; }
-.modal-box { background:var(--card);border-radius:1.25rem;padding:2rem;width:100%;max-width:420px;border:1px solid var(--border); }
-
-/* Surah dropdown */
-#surah-dd-content.open { display:block; }
-#surah-dd-chevron.rotated { transform:rotate(180deg); }
+/* Chat panel */
+#chat-panel {
+  transform: translateX(110%);
+  transition: transform .3s ease;
+}
+#chat-panel.open { transform: translateX(0); }
 
 /* Progress panel */
 #progress-panel { display:none; }
@@ -268,162 +264,10 @@ button:focus-visible { outline:2px solid #059669; outline-offset:2px; }
 <body class="min-h-screen">
 
 <!-- ═══════════════════════════════════════════════════ -->
-<!-- AUTH OVERLAY -->
-<!-- ═══════════════════════════════════════════════════ -->
-<div id="auth-overlay" class="fixed inset-0 z-[300] flex items-center justify-center p-4" style="background:linear-gradient(135deg,#064e3b 0%,#0f172a 100%);">
-  <div class="w-full max-w-md">
-    <!-- Logo -->
-    <div class="text-center mb-8">
-      <h1 class="text-6xl font-bold text-white mb-2" style="font-family:Amiri,serif;">حافِظ</h1>
-      <p class="text-emerald-300 text-sm">نظام تقييم التلاوة بالذكاء الاصطناعي</p>
-    </div>
-
-    <!-- Card -->
-    <div class="rounded-2xl p-8 border border-white/10" style="background:rgba(255,255,255,.07);backdrop-filter:blur(16px);">
-
-      <!-- Tabs -->
-      <div class="flex rounded-xl p-1 mb-6 gap-1" style="background:rgba(0,0,0,.2);">
-        <button id="tab-login" onclick="switchAuthTab('login')" class="flex-1 py-2 rounded-lg text-sm font-bold transition-all" style="background:rgba(255,255,255,.15);color:white;">تسجيل الدخول</button>
-        <button id="tab-register" onclick="switchAuthTab('register')" class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all" style="color:rgba(255,255,255,.6);">إنشاء حساب</button>
-      </div>
-
-      <!-- Error/Success msg -->
-      <div id="auth-msg" class="hidden mb-4 px-4 py-2.5 rounded-lg text-sm text-center font-semibold"></div>
-
-      <!-- Login form -->
-      <div id="form-login">
-        <div class="space-y-3 mb-4">
-          <input type="email" id="login-email" placeholder="البريد الإلكتروني" dir="ltr"
-            class="w-full px-4 py-3 rounded-xl text-sm border border-white/20 focus:outline-none focus:border-emerald-400 transition-colors"
-            style="background:rgba(255,255,255,.1);color:white;" onkeydown="if(event.key==='Enter')doLogin()">
-          <input type="password" id="login-pass" placeholder="كلمة المرور" dir="ltr"
-            class="w-full px-4 py-3 rounded-xl text-sm border border-white/20 focus:outline-none focus:border-emerald-400 transition-colors"
-            style="background:rgba(255,255,255,.1);color:white;" onkeydown="if(event.key==='Enter')doLogin()">
-        </div>
-        <button onclick="doLogin()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-sm transition-colors mb-3">
-          دخول
-        </button>
-        <button onclick="doResetPassword()" class="w-full text-center text-xs text-emerald-300 hover:text-white transition-colors mb-4">
-          نسيت كلمة المرور؟
-        </button>
-      </div>
-
-      <!-- Register form -->
-      <div id="form-register" class="hidden">
-        <div class="space-y-3 mb-4">
-          <input type="text" id="reg-name" placeholder="الاسم الكامل"
-            class="w-full px-4 py-3 rounded-xl text-sm border border-white/20 focus:outline-none focus:border-emerald-400 transition-colors"
-            style="background:rgba(255,255,255,.1);color:white;">
-          <input type="email" id="reg-email" placeholder="البريد الإلكتروني" dir="ltr"
-            class="w-full px-4 py-3 rounded-xl text-sm border border-white/20 focus:outline-none focus:border-emerald-400 transition-colors"
-            style="background:rgba(255,255,255,.1);color:white;">
-          <input type="password" id="reg-pass" placeholder="كلمة المرور (٦ أحرف على الأقل)" dir="ltr"
-            class="w-full px-4 py-3 rounded-xl text-sm border border-white/20 focus:outline-none focus:border-emerald-400 transition-colors"
-            style="background:rgba(255,255,255,.1);color:white;" onkeydown="if(event.key==='Enter')doRegister()">
-        </div>
-        <button onclick="doRegister()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-sm transition-colors mb-3">
-          إنشاء الحساب
-        </button>
-      </div>
-
-      <!-- Divider -->
-      <div class="flex items-center gap-3 mb-4">
-        <div class="flex-1 h-px" style="background:rgba(255,255,255,.15);"></div>
-        <span class="text-xs" style="color:rgba(255,255,255,.4);">أو</span>
-        <div class="flex-1 h-px" style="background:rgba(255,255,255,.15);"></div>
-      </div>
-
-      <!-- Google Sign-In -->
-      <button onclick="doGoogleSignIn()" class="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-white/20 hover:bg-white/10 transition-colors">
-        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 33.3 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 20-8 20-20 0-1.3-.1-2.7-.4-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.3 18.9 12 24 12c3.1 0 5.8 1.1 8 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5.1l-6.2-5.2C29.5 35.5 26.9 36 24 36c-5.2 0-9.6-2.6-11.3-6.7l-6.5 5C9.8 40 16.4 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.7 2.3-2.2 4.3-4.3 5.6l6.2 5.2C40.9 35.4 44 30 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
-        <span class="text-sm font-semibold text-white">المتابعة بحساب Google</span>
-      </button>
-
-    </div>
-
-    <p class="text-center text-xs mt-4" style="color:rgba(255,255,255,.3);">بالتسجيل توافق على شروط الاستخدام وسياسة الخصوصية</p>
-  </div>
-</div>
-
-<!-- PROFILE MODAL -->
-<div id="profile-modal" class="modal-overlay hidden">
-  <div class="modal-box">
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="text-lg font-bold" style="color:var(--text)">الملف الشخصي</h2>
-      <button onclick="document.getElementById('profile-modal').classList.add('hidden')" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
-        <i data-lucide="x" style="width:16px;height:16px;color:var(--text-muted);"></i>
-      </button>
-    </div>
-    <div class="flex flex-col items-center gap-4 mb-6">
-      <div id="profile-avatar" class="w-20 h-20 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center text-white text-3xl font-bold"></div>
-      <div class="text-center">
-        <p id="profile-name" class="font-bold text-lg" style="color:var(--text)"></p>
-        <p id="profile-email" class="text-sm" style="color:var(--text-muted)"></p>
-        <span id="profile-verified" class="text-xs px-2 py-0.5 rounded-full mt-1 inline-block"></span>
-      </div>
-    </div>
-    <div class="space-y-3">
-      <div class="p-3 rounded-xl" style="background:var(--slate-bg);">
-        <div class="flex justify-between text-sm"><span style="color:var(--text-muted)">تاريخ الانضمام</span><span id="profile-joined" class="font-semibold" style="color:var(--text)"></span></div>
-      </div>
-      <div class="p-3 rounded-xl" style="background:var(--slate-bg);">
-        <div class="flex justify-between text-sm"><span style="color:var(--text-muted)">طريقة التسجيل</span><span id="profile-provider" class="font-semibold" style="color:var(--text)"></span></div>
-      </div>
-    </div>
-    <button onclick="showSettings()" class="mt-4 w-full py-2.5 border border-[var(--border)] rounded-xl text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" style="color:var(--text);">
-      تعديل البيانات
-    </button>
-  </div>
-</div>
-
-<!-- SETTINGS MODAL -->
-<div id="settings-modal" class="modal-overlay hidden">
-  <div class="modal-box">
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="text-lg font-bold" style="color:var(--text)">الإعدادات</h2>
-      <button onclick="document.getElementById('settings-modal').classList.add('hidden')" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
-        <i data-lucide="x" style="width:16px;height:16px;color:var(--text-muted);"></i>
-      </button>
-    </div>
-    <div id="settings-msg" class="hidden mb-4 px-4 py-2.5 rounded-lg text-sm text-center font-semibold"></div>
-    <div class="space-y-4">
-      <div>
-        <label class="text-xs font-semibold mb-1 block" style="color:var(--text-muted)">الاسم المعروض</label>
-        <input type="text" id="settings-name" placeholder="أدخل اسمك"
-          class="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:border-emerald-500"
-          style="background:var(--slate-bg);color:var(--text);">
-      </div>
-      <div>
-        <label class="text-xs font-semibold mb-1 block" style="color:var(--text-muted)">كلمة المرور الجديدة</label>
-        <input type="password" id="settings-pass" placeholder="اتركه فارغاً إن لم تريد التغيير" dir="ltr"
-          class="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] text-sm focus:outline-none focus:border-emerald-500"
-          style="background:var(--slate-bg);color:var(--text);">
-      </div>
-      <button onclick="saveSettings()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition-colors">
-        حفظ التغييرات
-      </button>
-      <div class="border-t border-[var(--border)] pt-4">
-        <button onclick="doLogout()" class="w-full py-2.5 border border-red-300 dark:border-red-800 text-red-600 rounded-xl text-sm font-semibold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-          تسجيل الخروج
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════ -->
 <!-- TOP NAV -->
 <!-- ═══════════════════════════════════════════════════ -->
 <nav id="main-nav" class="glass border-b border-[var(--border)] h-14">
   <div class="flex items-center justify-between h-full px-3 md:px-5 max-w-full">
-
-    <!-- Back to Home -->
-    <a href="/"
-      class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors flex items-center gap-1.5 text-sm font-medium"
-      style="color:var(--text-muted);">
-      <i data-lucide="arrow-right" style="width:16px;height:16px;"></i>
-      <span class="hidden sm:block">الرئيسية</span>
-    </a>
 
     <!-- Logo -->
     <div class="flex items-center gap-2.5">
@@ -466,20 +310,20 @@ button:focus-visible { outline:2px solid #059669; outline-offset:2px; }
       <!-- Avatar -->
       <div class="relative">
         <button onclick="toggleUserMenu()" class="flex items-center gap-2 p-1 pr-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
-          <div id="nav-avatar" class="w-7 h-7 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xs overflow-hidden"></div>
-          <span id="nav-name" class="hidden sm:block text-sm font-semibold" style="color:var(--text)"></span>
+          <div class="w-7 h-7 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xs">أ</div>
+          <span class="hidden sm:block text-sm font-semibold" style="color:var(--text)">أحمد</span>
         </button>
         <div id="user-menu" class="hidden absolute top-full left-0 mt-1 w-44 card shadow-xl py-1 z-50">
-          <button onclick="showProfile();toggleUserMenu();" class="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm transition-colors" style="color:var(--text)">
+          <a href="#" class="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm transition-colors" style="color:var(--text)">
             <i data-lucide="user" style="width:15px;height:15px;"></i> الملف الشخصي
-          </button>
-          <button onclick="showSettings();toggleUserMenu();" class="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm transition-colors" style="color:var(--text)">
+          </a>
+          <a href="#" class="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm transition-colors" style="color:var(--text)">
             <i data-lucide="settings" style="width:15px;height:15px;"></i> الإعدادات
-          </button>
+          </a>
           <div class="border-t border-[var(--border)] my-1"></div>
-          <button onclick="doLogout()" class="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm text-red-600 transition-colors">
+          <a href="#" class="flex items-center gap-2 px-4 py-2.5 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm text-red-600 transition-colors">
             <i data-lucide="log-out" style="width:15px;height:15px;"></i> تسجيل الخروج
-          </button>
+          </a>
         </div>
       </div>
     </div>
@@ -703,73 +547,34 @@ button:focus-visible { outline:2px solid #059669; outline-offset:2px; }
 <div id="view-mushaf" class="view">
   <div class="flex h-[calc(100vh-56px)]">
 
-    <!-- RIGHT COLUMN: Surah Dropdown + Chat (desktop) -->
-    <aside class="hidden lg:flex flex-col w-80 border-r border-[var(--border)] overflow-hidden" style="background:var(--card);">
-
-      <!-- Surah Dropdown -->
-      <div class="border-b border-[var(--border)]">
-        <button onclick="toggleSurahDropdown()" class="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-          <div class="flex items-center gap-2">
-            <i data-lucide="book-open" style="width:15px;height:15px;color:var(--emerald);"></i>
-            <span class="font-bold text-sm" id="surah-dd-label" style="color:var(--text)">الفاتحة</span>
-          </div>
-          <i data-lucide="chevron-down" id="surah-dd-chevron" style="width:15px;height:15px;color:var(--text-muted);transition:transform .2s;"></i>
-        </button>
-        <!-- Dropdown Content -->
-        <div id="surah-dd-content" class="hidden border-t border-[var(--border)]" style="max-height:260px;overflow-y:auto;">
-          <div class="p-2">
-            <input type="text" placeholder="ابحث في السور..." oninput="filterSurahs(this.value)"
-              class="w-full px-3 py-1.5 rounded-lg text-sm border border-[var(--border)] focus:outline-none mb-1"
-              style="background:var(--slate-bg);color:var(--text);">
-            <div id="surah-list"></div>
-          </div>
+    <!-- LEFT PANEL (desktop) -->
+    <aside class="hidden lg:flex flex-col w-72 border-l border-[var(--border)] overflow-hidden" style="background:var(--card)">
+      
+      <!-- Surah Search -->
+      <div class="p-4 border-b border-[var(--border)]">
+        <div class="relative">
+          <i data-lucide="search" style="width:14px;height:14px;position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);"></i>
+          <input type="text" placeholder="ابحث في السور..." oninput="filterSurahs(this.value)"
+            class="w-full pr-8 pl-3 py-2 rounded-lg text-sm border border-[var(--border)] focus:outline-none"
+            style="background:var(--slate-bg);color:var(--text);">
         </div>
       </div>
 
-      <!-- Permanent Chat -->
-      <div class="flex flex-col flex-1 overflow-hidden">
-        <!-- Chat Header -->
-        <div class="flex items-center gap-2.5 px-4 py-3 border-b border-[var(--border)]">
-          <div class="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-700 rounded-lg flex items-center justify-center shadow-sm">
-            <i data-lucide="bot" style="width:14px;height:14px;color:white;"></i>
-          </div>
-          <div>
-            <h3 class="font-bold text-sm" style="color:var(--text)">حافظ الذكي</h3>
-            <p class="text-xs text-emerald-500">مساعدك التجويدي</p>
-          </div>
-        </div>
-        <!-- Quick Questions -->
-        <div class="px-3 py-2 border-b border-[var(--border)]">
-          <div class="flex flex-wrap gap-1">
-            <button onclick="askChatQuestion('ما هو المد الواجب المتصل؟')" class="text-xs px-2 py-1 rounded-full border border-[var(--border)] hover:border-violet-400 transition-colors" style="color:var(--text);">المد الواجب</button>
-            <button onclick="askChatQuestion('ما هي حروف القلقلة؟')" class="text-xs px-2 py-1 rounded-full border border-[var(--border)] hover:border-violet-400 transition-colors" style="color:var(--text);">القلقلة</button>
-            <button onclick="askChatQuestion('كيف أؤدي الغنة صحيحاً؟')" class="text-xs px-2 py-1 rounded-full border border-[var(--border)] hover:border-violet-400 transition-colors" style="color:var(--text);">الغنة</button>
-          </div>
-        </div>
-        <!-- Messages -->
-        <div id="chat-messages" class="flex-1 overflow-y-auto p-3 space-y-3">
-          <div class="flex gap-2">
-            <div class="w-6 h-6 bg-gradient-to-br from-violet-500 to-purple-700 rounded-md flex items-center justify-center flex-shrink-0 mt-1">
-              <i data-lucide="bot" style="width:11px;height:11px;color:white;"></i>
-            </div>
-            <div class="chat-hafiz p-2.5 max-w-[90%]">
-              <p class="text-sm leading-relaxed" style="color:var(--text);">السلام عليكم ورحمة الله، أنا حافظ مساعدك في علم التجويد. يمكنك سؤالي عن أي حكم تجويدي.</p>
-            </div>
-          </div>
-        </div>
-        <!-- Input -->
-        <div class="p-2 border-t border-[var(--border)]">
-          <div class="flex items-end gap-1.5">
-            <textarea id="chat-input" rows="1" placeholder="اسأل عن أي حكم..." onkeydown="chatKeyDown(event)"
-              class="flex-1 p-2.5 rounded-xl border border-[var(--border)] text-sm resize-none focus:outline-none focus:border-violet-400"
-              style="background:var(--slate-bg);color:var(--text);max-height:80px;"></textarea>
-            <button onclick="sendChatMessage()" class="w-9 h-9 bg-violet-600 hover:bg-violet-700 text-white rounded-lg flex items-center justify-center flex-shrink-0 transition-colors">
-              <i data-lucide="send" style="width:13px;height:13px;"></i>
-            </button>
-          </div>
-        </div>
+      <!-- Surah List -->
+      <div id="surah-list" class="flex-1 overflow-y-auto p-2">
+        <!-- Populated by JS -->
       </div>
 
+      <!-- Page Jump -->
+      <div class="p-4 border-t border-[var(--border)]">
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-semibold" style="color:var(--text-muted)">انتقل للصفحة</label>
+          <input type="number" id="page-jump" min="1" max="604" value="1" onchange="goToPage(this.value)"
+            class="flex-1 p-2 rounded-lg text-sm border border-[var(--border)] text-center font-bold focus:outline-none"
+            style="background:var(--slate-bg);color:var(--text);">
+          <span class="text-xs" style="color:var(--text-muted)">/٦٠٤</span>
+        </div>
+      </div>
     </aside>
 
     <!-- CENTER: MUSHAF PAGE -->
@@ -778,6 +583,10 @@ button:focus-visible { outline:2px solid #059669; outline-offset:2px; }
       <!-- Mushaf Toolbar -->
       <div class="flex items-center justify-between px-4 py-2 border-b border-[var(--border)]" style="background:var(--card)">
         <div class="flex items-center gap-2">
+          <!-- Mobile sidebar toggle -->
+          <button onclick="toggleMobileSurahList()" class="lg:hidden p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+            <i data-lucide="menu" style="width:16px;height:16px;color:var(--text-muted);"></i>
+          </button>
           <!-- Page nav -->
           <button onclick="prevPage()" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
             <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--text-muted);"></i>
@@ -806,6 +615,10 @@ button:focus-visible { outline:2px solid #059669; outline-offset:2px; }
           <!-- Bookmark -->
           <button onclick="addBookmark()" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
             <i data-lucide="bookmark" style="width:15px;height:15px;color:var(--text-muted);"></i>
+          </button>
+          <!-- Chat -->
+          <button onclick="openChat()" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+            <i data-lucide="message-circle" style="width:15px;height:15px;color:var(--text-muted);"></i>
           </button>
         </div>
       </div>
@@ -863,8 +676,8 @@ button:focus-visible { outline:2px solid #059669; outline-offset:2px; }
       </div>
     </div>
 
-    <!-- RIGHT PANEL: Page Jump (mobile-only utility) hidden on desktop since right column is there -->
-    <aside class="hidden" style="background:var(--card)">
+    <!-- RIGHT PANEL: Audio & Recitation (desktop) -->
+    <aside class="hidden xl:flex flex-col w-72 border-r border-[var(--border)] overflow-y-auto" style="background:var(--card)">
       
       <!-- Reciter -->
       <div class="p-4 border-b border-[var(--border)]">
@@ -921,33 +734,6 @@ button:focus-visible { outline:2px solid #059669; outline-offset:2px; }
           <i data-lucide="circle" style="width:13px;height:13px;fill:white;"></i>
           ابدأ التسجيل
         </button>
-        <!-- Early Access Banner -->
-        <div id="early-access-banner" class="mt-4 p-4 rounded-xl text-center"
-          style="background:linear-gradient(135deg,#064e3b,#065f46);color:white;">
-          <p class="text-sm font-bold mb-1">🚀 الوصول المبكر</p>
-          <p class="text-xs text-white/80 mb-3">
-            ميزة التصحيح الصوتي قيد الاختبار — سجّل بريدك لتكون من أوائل المستخدمين
-          </p>
-          <div class="flex gap-2">
-            <input
-              type="email"
-              id="early-email"
-              placeholder="بريدك الإلكتروني"
-              class="flex-1 px-3 py-2 rounded-lg text-sm text-slate-800 focus:outline-none"
-              style="direction:ltr;"
-            >
-            <button
-              onclick="submitEarlyAccess()"
-              class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-bold transition-colors"
-            >
-              سجّل
-            </button>
-          </div>
-          <div id="early-success" class="hidden mt-2 text-xs text-emerald-300">
-            ✅ تم التسجيل! سنتواصل معك قريباً
-          </div>
-        </div>
-
         <div id="rec-status" class="hidden mt-3 text-center">
           <div class="text-2xl font-bold text-emerald-600" id="rec-timer">٠:٠٠</div>
           <div class="text-xs text-emerald-500">جاري التسجيل...</div>
@@ -1212,7 +998,7 @@ button:focus-visible { outline:2px solid #059669; outline-offset:2px; }
         <i data-lucide="mic" style="width:22px;height:22px;color:white;"></i>
       </div>
     </button>
-    <button onclick="showView('chat')" class="btab flex flex-col items-center gap-0.5 p-2 text-slate-400" data-view="chat">
+    <button onclick="openChat()" class="btab flex flex-col items-center gap-0.5 p-2 text-slate-400" data-view="chat">
       <i data-lucide="message-circle" style="width:20px;height:20px;"></i>
       <span class="text-xs">حافظ</span>
     </button>
@@ -1224,10 +1010,10 @@ button:focus-visible { outline:2px solid #059669; outline-offset:2px; }
 </nav>
 
 <!-- ═══════════════════════════════════════════════════ -->
-<!-- VIEW: CHAT (Mobile) -->
+<!-- CHAT PANEL (Slide-in) -->
 <!-- ═══════════════════════════════════════════════════ -->
-<div id="view-chat" class="view lg:hidden pt-14 pb-16 flex flex-col h-screen" style="background:var(--slate-bg);">
-  <div class="flex items-center justify-between p-4 border-b border-[var(--border)]" style="background:var(--card);">
+<div id="chat-panel" class="fixed top-14 left-0 bottom-0 w-full sm:w-96 glass border-l border-[var(--border)] z-45 flex flex-col" style="z-index:45;">
+  <div class="flex items-center justify-between p-4 border-b border-[var(--border)]">
     <div class="flex items-center gap-3">
       <div class="w-9 h-9 bg-gradient-to-br from-violet-500 to-purple-700 rounded-xl flex items-center justify-center shadow-sm">
         <i data-lucide="bot" style="width:16px;height:16px;color:white;"></i>
@@ -1237,11 +1023,14 @@ button:focus-visible { outline:2px solid #059669; outline-offset:2px; }
         <p class="text-xs text-emerald-500">متصل • مساعدك التجويدي</p>
       </div>
     </div>
-    <span class="text-xs" style="color:var(--text-muted);">مساعدك التجويدي</span>
+    <button onclick="closeChat()" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+      <i data-lucide="x" style="width:16px;height:16px;color:var(--text-muted);"></i>
+    </button>
   </div>
 
   <!-- Quick Questions -->
-  <div class="px-3 py-2 border-b border-[var(--border)]" style="background:var(--card);">
+  <div class="p-3 border-b border-[var(--border)]">
+    <p class="text-xs font-semibold mb-2" style="color:var(--text-muted)">أسئلة شائعة</p>
     <div class="flex flex-wrap gap-1.5">
       <button onclick="askChatQuestion('ما هو المد الواجب المتصل؟')" class="text-xs px-2.5 py-1 rounded-full border border-[var(--border)] hover:border-violet-400 transition-colors" style="color:var(--text);">المد الواجب</button>
       <button onclick="askChatQuestion('ما هي حروف القلقلة؟')" class="text-xs px-2.5 py-1 rounded-full border border-[var(--border)] hover:border-violet-400 transition-colors" style="color:var(--text);">القلقلة</button>
@@ -1250,30 +1039,32 @@ button:focus-visible { outline:2px solid #059669; outline-offset:2px; }
     </div>
   </div>
 
-  <!-- Messages (mobile chat view) -->
-  <div id="chat-messages-mobile" class="flex-1 overflow-y-auto p-4 space-y-3">
+  <!-- Messages -->
+  <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3">
     <div class="flex gap-3">
       <div class="w-7 h-7 bg-gradient-to-br from-violet-500 to-purple-700 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
         <i data-lucide="bot" style="width:13px;height:13px;color:white;"></i>
       </div>
       <div class="chat-hafiz p-3 max-w-[85%]">
-        <p class="text-sm leading-relaxed" style="color:var(--text);">السلام عليكم ورحمة الله، أنا حافظ مساعدك في علم التجويد.</p>
+        <p class="text-sm leading-relaxed" style="color:var(--text);">السلام عليكم ورحمة الله، أنا حافظ مساعدك في علم التجويد. يمكنك سؤالي عن أي حكم تجويدي وسأشرحه لك بدقة.</p>
       </div>
     </div>
   </div>
 
-  <!-- Input (mobile) -->
-  <div class="p-3 border-t border-[var(--border)]" style="background:var(--card);">
+  <!-- Input -->
+  <div class="p-3 border-t border-[var(--border)]">
     <div class="flex items-end gap-2">
-      <textarea id="chat-input-mobile" rows="1" placeholder="اسأل عن أي حكم تجويدي..." onkeydown="chatKeyDownMobile(event)"
+      <textarea id="chat-input" rows="1" placeholder="اسأل عن أي حكم تجويدي..." onkeydown="chatKeyDown(event)"
         class="flex-1 p-3 rounded-xl border border-[var(--border)] text-sm resize-none focus:outline-none focus:border-violet-400"
-        style="background:var(--slate-bg);color:var(--text);max-height:100px;"></textarea>
-      <button onclick="sendChatMessage('mobile')" class="w-10 h-10 bg-violet-600 hover:bg-violet-700 text-white rounded-xl flex items-center justify-center flex-shrink-0 transition-colors">
+        style="background:var(--slate-bg);color:var(--text);max-height:100px;"
+      ></textarea>
+      <button onclick="sendChatMessage()" id="send-btn" class="w-10 h-10 bg-violet-600 hover:bg-violet-700 text-white rounded-xl flex items-center justify-center flex-shrink-0 transition-colors">
         <i data-lucide="send" style="width:15px;height:15px;"></i>
       </button>
     </div>
   </div>
 </div>
+<div id="chat-overlay" class="hidden fixed inset-0 bg-black/30 z-40" onclick="closeChat()"></div>
 
 <!-- ═══════════════════════════════════════════════════ -->
 <!-- VERSE MODAL -->
@@ -1454,6 +1245,24 @@ button:focus-visible { outline:2px solid #059669; outline-offset:2px; }
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- MOBILE SURAH SIDEBAR -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div id="mobile-surah-sidebar" class="lg:hidden fixed top-14 right-0 bottom-0 w-80 glass border-l border-[var(--border)] z-50 transform translate-x-full transition-transform duration-300">
+  <div class="p-4 border-b border-[var(--border)] flex items-center justify-between">
+    <h3 class="font-bold" style="color:var(--text)">قائمة السور</h3>
+    <button onclick="toggleMobileSurahList()" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+      <i data-lucide="x" style="width:15px;height:15px;color:var(--text-muted);"></i>
+    </button>
+  </div>
+  <div class="p-3 border-b border-[var(--border)]">
+    <input type="text" placeholder="ابحث في السور..." oninput="filterSurahs(this.value)"
+      class="w-full px-3 py-2 rounded-lg text-sm border border-[var(--border)] focus:outline-none"
+      style="background:var(--slate-bg);color:var(--text);">
+  </div>
+  <div id="mobile-surah-list" class="overflow-y-auto h-[calc(100%-120px)] p-2"></div>
+</div>
+<div id="mobile-surah-overlay" class="lg:hidden hidden fixed inset-0 bg-black/30 z-45" onclick="toggleMobileSurahList()"></div>
 
 <!-- ═══════════════════════════════════════════════════ -->
 <!-- JAVASCRIPT -->
@@ -1589,27 +1398,20 @@ function setActiveTab(name) {
 // ─── SURAH LIST ─────────────────────────────────────
 function renderSurahList(data = surahs) {
   const html = data.map(s => `
-    <button onclick="goToSurah(${s.id})" class="w-full flex items-center justify-between p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors text-right">
+    <button onclick="goToSurah(${s.id})" class="w-full flex items-center justify-between p-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors text-right">
       <div class="flex items-center gap-2">
-        <div class="w-6 h-6 rounded-md bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-700 dark:text-emerald-400 font-bold text-xs flex-shrink-0">${s.id}</div>
+        <div class="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-700 dark:text-emerald-400 font-bold text-xs flex-shrink-0">${s.id}</div>
         <div>
           <div class="font-semibold text-sm" style="color:var(--text);">${s.name}</div>
-          <div class="text-xs" style="color:var(--text-muted);">${s.verses} آية</div>
+          <div class="text-xs" style="color:var(--text-muted);">${s.verses} آية • ${s.type}</div>
         </div>
       </div>
       <span class="text-xs" style="color:var(--text-muted);">ص${s.page}</span>
     </button>
   `).join('');
-  const sl = document.getElementById('surah-list');
-  if (sl) sl.innerHTML = html;
-}
-
-function toggleSurahDropdown() {
-  const content = document.getElementById('surah-dd-content');
-  const chevron = document.getElementById('surah-dd-chevron');
-  content.classList.toggle('hidden');
-  content.classList.toggle('open');
-  chevron.classList.toggle('rotated');
+  document.getElementById('surah-list').innerHTML = html;
+  const mob = document.getElementById('mobile-surah-list');
+  if (mob) mob.innerHTML = html;
 }
 
 function filterSurahs(q) {
@@ -1622,13 +1424,9 @@ function goToSurah(id) {
   if (!s) return;
   goToPage(s.page);
   showView('mushaf');
-  // Update dropdown label and close it
-  const lbl = document.getElementById('surah-dd-label');
-  if (lbl) lbl.textContent = s.name;
-  const content = document.getElementById('surah-dd-content');
-  const chevron = document.getElementById('surah-dd-chevron');
-  if (content) { content.classList.add('hidden'); content.classList.remove('open'); }
-  if (chevron) chevron.classList.remove('rotated');
+  // close mobile sidebar if open
+  const mob = document.getElementById('mobile-surah-sidebar');
+  if (mob && !mob.classList.contains('translate-x-full')) toggleMobileSurahList();
 }
 
 // ─── PAGE RENDER ─────────────────────────────────────
@@ -1714,13 +1512,30 @@ function togglePlay() {
 }
 
 function toggleRecording() {
-  // Feature coming soon — show early access banner instead
-  document.getElementById('early-access-banner')?.scrollIntoView({behavior:'smooth'});
-  const toast = document.createElement('div');
-  toast.className = 'fixed bottom-20 lg:bottom-4 right-4 bg-slate-800 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-lg z-50 fade-in';
-  toast.textContent = '🎙️ ميزة التصحيح الصوتي قادمة قريباً';
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
+  isRecording = !isRecording;
+  const btn = document.getElementById('record-btn');
+  const btnMain = document.getElementById('rec-btn-main');
+  const status = document.getElementById('rec-status');
+  const results = document.getElementById('recitation-results');
+
+  if (isRecording) {
+    if (btn) { btn.classList.replace('bg-emerald-600','bg-red-600'); btn.innerHTML = '<i data-lucide="square" style="width:13px;height:13px;fill:white;"></i> إيقاف'; }
+    if (btnMain) { btnMain.classList.replace('bg-emerald-600','bg-red-600'); btnMain.classList.add('rec-pulse'); btnMain.querySelector('span').textContent = 'إيقاف'; }
+    if (status) status.classList.remove('hidden');
+    recSeconds = 0;
+    recTimerInterval = setInterval(() => {
+      recSeconds++;
+      const t = document.getElementById('rec-timer');
+      if (t) t.textContent = `${Math.floor(recSeconds/60)}:${String(recSeconds%60).padStart(2,'0')}`;
+    }, 1000);
+  } else {
+    clearInterval(recTimerInterval);
+    if (btn) { btn.classList.replace('bg-red-600','bg-emerald-600'); btn.innerHTML = '<i data-lucide="circle" style="width:13px;height:13px;fill:white;"></i> ابدأ التسجيل'; }
+    if (btnMain) { btnMain.classList.replace('bg-red-600','bg-emerald-600'); btnMain.classList.remove('rec-pulse'); btnMain.querySelector('span').textContent = 'ابدأ'; }
+    if (status) status.classList.add('hidden');
+    if (results) results.classList.remove('hidden');
+  }
+  lucide.createIcons();
 }
 
 function selectReciter(val, el) {
@@ -1772,19 +1587,14 @@ function openChat() {
 }
 function closeChat() {
   document.getElementById('chat-panel').classList.remove('open');
+  document.getElementById('chat-overlay').classList.add('hidden');
 }
 function askChatQuestion(q) {
-  // Use mobile input if on mobile view, otherwise desktop
-  const isMobile = window.innerWidth < 1024;
-  const inputId = isMobile ? 'chat-input-mobile' : 'chat-input';
-  const el = document.getElementById(inputId);
-  if (el) { el.value = q; sendChatMessage(isMobile ? 'mobile' : 'desktop'); }
+  document.getElementById('chat-input').value = q;
+  sendChatMessage();
 }
 function chatKeyDown(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage('desktop'); }
-}
-function chatKeyDownMobile(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage('mobile'); }
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
 }
 
 const tajweedResponses = {
@@ -1797,111 +1607,55 @@ const tajweedResponses = {
   'default': 'سؤال وجيه في علم التجويد! يمكنني مساعدتك في أحكام المد، والغنة، والقلقلة، والوقف والابتداء، وأحكام النون والميم الساكنتين. ما الحكم الذي تودّ التعمق فيه؟'
 };
 
-async function sendChatMessage(mode = 'desktop') {
-  const inputId = mode === 'mobile' ? 'chat-input-mobile' : 'chat-input';
-  const msgContId = mode === 'mobile' ? 'chat-messages-mobile' : 'chat-messages';
-  const input = document.getElementById(inputId);
-  if (!input) return;
+async function sendChatMessage() {
+  const input = document.getElementById('chat-input');
   const msg = input.value.trim();
   if (!msg) return;
   input.value = '';
-  addChatBubble(msg, 'user', msgContId);
-
+  addChatBubble(msg, 'user');
+  
+  // Show typing
   const typingId = 'typing-' + Date.now();
-  document.getElementById(msgContId).insertAdjacentHTML('beforeend',
+  document.getElementById('chat-messages').insertAdjacentHTML('beforeend',
     `<div id="${typingId}" class="flex gap-3">
       <div class="w-7 h-7 bg-gradient-to-br from-violet-500 to-purple-700 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
         <i data-lucide="bot" style="width:13px;height:13px;color:white;"></i>
       </div>
       <div class="chat-hafiz p-3"><span style="color:var(--text-muted)">يكتب...</span></div>
     </div>`);
-  scrollChat(msgContId);
+  scrollChat();
   lucide.createIcons();
 
-  const maxAttempts = 3;
-  let attempts = 0;
-
-  while (attempts < maxAttempts) {
-    try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 1000,
-          system: `أنت "حافظ"، مساعد تجويدي متخصص في علم التجويد وأحكامه. أجب دائماً باللغة العربية الفصحى بأسلوب علمي دقيق واشرح الأحكام التجويدية بوضوح مع ذكر الأمثلة القرآنية. لكل سؤال أعطِ جواباً مختلفاً ومخصصاً للسؤال تحديداً. لا تتجاوز علم التجويد وعلوم القرآن.`,
-          messages: [{ role: 'user', content: msg }]
-        })
-      });
-
-      if (response.status === 529 || response.status === 503 || response.status === 500) {
-        attempts++;
-        if (attempts < maxAttempts) {
-          const wait = 4000 * attempts;
-          const statusEl = document.querySelector(`#${typingId} div:last-child span`);
-          if (statusEl) statusEl.textContent = `جاري المحاولة... (${attempts}/${maxAttempts})`;
-          await new Promise(r => setTimeout(r, wait));
-          continue;
-        }
-        throw new Error('overloaded');
-      }
-
-      const data = await response.json();
-      document.getElementById(typingId)?.remove();
-      const reply = data.content?.[0]?.text || findLocalResponse(msg);
-      addChatBubble(reply, 'hafiz', msgContId);
-      return;
-
-    } catch (err) {
-      attempts++;
-      if (attempts >= maxAttempts) {
-        document.getElementById(typingId)?.remove();
-        addChatBubble(findLocalResponse(msg), 'hafiz', msgContId);
-        return;
-      }
-      await new Promise(r => setTimeout(r, 4000 * attempts));
-    }
+  // Call Anthropic API
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: `أنت "حافظ"، مساعد تجويدي متخصص في علم التجويد وأحكامه. أجب دائماً باللغة العربية الفصحى بأسلوب علمي دقيق. اشرح الأحكام التجويدية بوضوح مع ذكر الأمثلة القرآنية. لا تتجاوز علم التجويد وعلوم القرآن.`,
+        messages: [{ role: 'user', content: msg }]
+      })
+    });
+    const data = await response.json();
+    document.getElementById(typingId)?.remove();
+    const reply = data.content?.[0]?.text || findLocalResponse(msg);
+    addChatBubble(reply, 'hafiz');
+  } catch {
+    document.getElementById(typingId)?.remove();
+    addChatBubble(findLocalResponse(msg), 'hafiz');
   }
 }
 
 function findLocalResponse(msg) {
-  if (msg.includes('مد واجب') || msg.includes('واجب متصل'))
-    return 'المد الواجب المتصل: أن يجتمع حرف المد والهمزة في كلمة واحدة، ويمد 4 أو 5 حركات وجوباً. مثاله: جاء، شاء، السماء، جيء.';
-  if (msg.includes('مد') || msg.includes('المد'))
-    return 'المد أنواع: طبيعي (حركتان)، واجب متصل (4-5 حركات)، جائز منفصل (2-6 حركات)، لازم (6 حركات). السبب: الهمز أو السكون.';
-  if (msg.includes('قلقلة'))
-    return 'القلقلة: اهتزاز صوتي عند سكون أحد حروف (قطب جد). صغرى في الوصل وكبرى عند الوقف. مثال: يَقْطَعُ، الحَقّ.';
-  if (msg.includes('غنة'))
-    return 'الغنة: صوت أنفي مقداره حركتان يلازم النون والميم المشددتين. وتظهر في الإخفاء والإدغام بغنة والإقلاب.';
-  if (msg.includes('إخفاء'))
-    return 'الإخفاء الحقيقي: إخفاء النون الساكنة أو التنوين عند 15 حرفاً مع إبقاء الغنة. حروفه: ص ذ ث ك ج ش ق س د ط ز ف ت ض ظ.';
-  if (msg.includes('إدغام'))
-    return 'الإدغام: إدخال النون الساكنة في الحرف التالي. بغنة عند: ي ن م و. وبلا غنة عند: ل ر. مثال: مَن يَقول، مِن رَبك.';
-  if (msg.includes('إقلاب'))
-    return 'الإقلاب: قلب النون الساكنة أو التنوين ميماً مخفاةً عند الباء مع الغنة. مثاله: أنبياء، سميع بصير.';
-  if (msg.includes('وقف'))
-    return 'الوقف: قطع الصوت عند نهاية الكلمة. أنواعه: تام (م)، كافٍ، حسن، قبيح. وعلامة لا (ممنوع الوقف).';
-  if (msg.includes('تفخيم'))
-    return 'التفخيم: تسمين الحرف. حروف الاستعلاء دائماً مفخمة: خ ص ض غ ط ق ظ. ولفظ الجلالة يُفخم بعد الفتح والضم.';
-  if (msg.includes('ترقيق'))
-    return 'الترقيق: تنحيف الحرف. جميع الحروف مرققة إلا حروف الاستعلاء. والراء تُرقق بعد الكسر وعند الوقف على بعض الكلمات.';
-  return 'يمكنني مساعدتك في: المدود، الغنة، القلقلة، الوقف، الإخفاء، الإدغام، الإقلاب، التفخيم والترقيق. ما الحكم الذي تودّ التعمق فيه؟';
-}
-
-function submitEarlyAccess() {
-  const email = document.getElementById('early-email').value.trim();
-  if (!email || !email.includes('@')) {
-    alert('يرجى إدخال بريد إلكتروني صحيح');
-    return;
+  for (const [key, val] of Object.entries(tajweedResponses)) {
+    if (msg.includes(key)) return val;
   }
-  const list = JSON.parse(localStorage.getItem('earlyAccess') || '[]');
-  list.push({ email, date: new Date().toISOString() });
-  localStorage.setItem('earlyAccess', JSON.stringify(list));
-  document.getElementById('early-success').classList.remove('hidden');
-  document.getElementById('early-email').value = '';
+  return tajweedResponses.default;
 }
 
-function addChatBubble(text, sender, containerId = 'chat-messages') {
+function addChatBubble(text, sender) {
   const isHafiz = sender === 'hafiz';
   const html = isHafiz
     ? `<div class="flex gap-3 fade-in">
@@ -1913,15 +1667,14 @@ function addChatBubble(text, sender, containerId = 'chat-messages') {
     : `<div class="flex justify-start flex-row-reverse fade-in">
         <div class="chat-user p-3 max-w-[85%]"><p class="text-sm leading-relaxed">${text}</p></div>
       </div>`;
-  const cont = document.getElementById(containerId);
-  if (cont) cont.insertAdjacentHTML('beforeend', html);
-  scrollChat(containerId);
+  document.getElementById('chat-messages').insertAdjacentHTML('beforeend', html);
+  scrollChat();
   lucide.createIcons();
 }
 
-function scrollChat(containerId = 'chat-messages') {
-  const m = document.getElementById(containerId);
-  if (m) m.scrollTop = m.scrollHeight;
+function scrollChat() {
+  const m = document.getElementById('chat-messages');
+  m.scrollTop = m.scrollHeight;
 }
 
 // ─── THEME ───────────────────────────────────────────
@@ -1959,6 +1712,14 @@ document.addEventListener('click', e => {
   }
 });
 
+// ─── MOBILE SURAH SIDEBAR ────────────────────────────
+function toggleMobileSurahList() {
+  const sb = document.getElementById('mobile-surah-sidebar');
+  const ov = document.getElementById('mobile-surah-overlay');
+  sb.classList.toggle('translate-x-full');
+  ov.classList.toggle('hidden');
+}
+
 // ─── BOOKMARK ────────────────────────────────────────
 function addBookmark() {
   const toast = document.createElement('div');
@@ -1988,223 +1749,6 @@ function toArabicNum(n) {
 }
 function escapeHtml(t) {
   return t.replace(/'/g,"&#39;").replace(/"/g,"&quot;");
-}
-
-// ═══════════════════════════════════════════════════
-// FIREBASE AUTH
-// ═══════════════════════════════════════════════════
-
-// ⚠️  استبدل هذه القيم بإعدادات مشروعك من Firebase Console
-const firebaseConfig = {
-  apiKey: "AIzaSyAaBXXdRi64ZqM5lmMs5jRD9i214CMO92A",
-  authDomain: "hafiz-web-305bc.firebaseapp.com",
-  projectId: "hafiz-web-305bc",
-  storageBucket: "hafiz-web-305bc.firebasestorage.app",
-  messagingSenderId: "190878417698",
-  appId: "1:190878417698:web:cc70699e3fd768a2e35b7b"
-};
-
-let _auth = null;
-try {
-  firebase.initializeApp(firebaseConfig);
-  _auth = firebase.auth();
-  _auth.languageCode = 'ar';
-
-  // Auth state observer — show/hide app
-  _auth.onAuthStateChanged(user => {
-    const overlay = document.getElementById('auth-overlay');
-    if (user) {
-      overlay.classList.add('hidden');
-      updateNavUser(user);
-    } else {
-      overlay.classList.remove('hidden');
-    }
-  });
-} catch(e) {
-  console.warn('Firebase not configured — running in demo mode');
-  // In demo mode: hide auth overlay so the app is accessible
-  document.getElementById('auth-overlay').classList.add('hidden');
-}
-
-function updateNavUser(user) {
-  const name = user.displayName || user.email?.split('@')[0] || 'مستخدم';
-  const navName = document.getElementById('nav-name');
-  const navAvatar = document.getElementById('nav-avatar');
-  if (navName) navName.textContent = name;
-  if (navAvatar) {
-    if (user.photoURL) {
-      navAvatar.innerHTML = `<img src="${user.photoURL}" class="w-full h-full object-cover rounded-full">`;
-    } else {
-      navAvatar.textContent = name.charAt(0).toUpperCase();
-    }
-  }
-  // Update welcome message
-  const welcome = document.querySelector('#view-dashboard h1');
-  if (welcome) welcome.textContent = `السلام عليكم، ${name} 👋`;
-}
-
-// Auth tab switch
-function switchAuthTab(tab) {
-  const isLogin = tab === 'login';
-  document.getElementById('form-login').classList.toggle('hidden', !isLogin);
-  document.getElementById('form-register').classList.toggle('hidden', isLogin);
-  document.getElementById('tab-login').style.cssText = isLogin
-    ? 'background:rgba(255,255,255,.15);color:white;'
-    : 'background:transparent;color:rgba(255,255,255,.6);';
-  document.getElementById('tab-register').style.cssText = !isLogin
-    ? 'background:rgba(255,255,255,.15);color:white;'
-    : 'background:transparent;color:rgba(255,255,255,.6);';
-  showAuthMsg('', '');
-}
-
-function showAuthMsg(text, type) {
-  const el = document.getElementById('auth-msg');
-  if (!text) { el.classList.add('hidden'); return; }
-  el.textContent = text;
-  el.className = `mb-4 px-4 py-2.5 rounded-lg text-sm text-center font-semibold ${
-    type === 'error' ? 'bg-red-500/20 text-red-300' : 'bg-emerald-500/20 text-emerald-300'
-  }`;
-}
-
-async function doLogin() {
-  if (!_auth) return;
-  const email = document.getElementById('login-email').value.trim();
-  const pass  = document.getElementById('login-pass').value;
-  if (!email || !pass) { showAuthMsg('يرجى تعبئة جميع الحقول', 'error'); return; }
-  try {
-    await _auth.signInWithEmailAndPassword(email, pass);
-  } catch(e) {
-    const msgs = {
-      'auth/user-not-found': 'البريد غير مسجّل',
-      'auth/wrong-password': 'كلمة المرور غير صحيحة',
-      'auth/invalid-email': 'البريد غير صالح',
-      'auth/too-many-requests': 'محاولات كثيرة — حاول لاحقاً'
-    };
-    showAuthMsg(msgs[e.code] || 'خطأ في تسجيل الدخول', 'error');
-  }
-}
-
-async function doRegister() {
-  if (!_auth) return;
-  const name  = document.getElementById('reg-name').value.trim();
-  const email = document.getElementById('reg-email').value.trim();
-  const pass  = document.getElementById('reg-pass').value;
-  if (!name || !email || !pass) { showAuthMsg('يرجى تعبئة جميع الحقول', 'error'); return; }
-  if (pass.length < 6) { showAuthMsg('كلمة المرور يجب أن تكون ٦ أحرف على الأقل', 'error'); return; }
-  try {
-    const cred = await _auth.createUserWithEmailAndPassword(email, pass);
-    await cred.user.updateProfile({ displayName: name });
-    await cred.user.sendEmailVerification();
-    showAuthMsg('✅ تم إنشاء الحساب! تحقق من بريدك الإلكتروني', 'success');
-  } catch(e) {
-    const msgs = {
-      'auth/email-already-in-use': 'البريد مسجّل مسبقاً',
-      'auth/invalid-email': 'البريد غير صالح',
-      'auth/weak-password': 'كلمة المرور ضعيفة جداً'
-    };
-    showAuthMsg(msgs[e.code] || 'خطأ في إنشاء الحساب', 'error');
-  }
-}
-
-async function doGoogleSignIn() {
-  if (!_auth) return;
-  try {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    await _auth.signInWithPopup(provider);
-  } catch(e) {
-    if (e.code !== 'auth/popup-closed-by-user') {
-      showAuthMsg('فشل تسجيل الدخول بـ Google', 'error');
-    }
-  }
-}
-
-async function doResetPassword() {
-  if (!_auth) return;
-  const email = document.getElementById('login-email').value.trim();
-  if (!email) { showAuthMsg('أدخل بريدك الإلكتروني أولاً', 'error'); return; }
-  try {
-    await _auth.sendPasswordResetEmail(email);
-    showAuthMsg('✅ تم إرسال رابط إعادة التعيين لبريدك', 'success');
-  } catch(e) {
-    showAuthMsg('تأكد من صحة البريد الإلكتروني', 'error');
-  }
-}
-
-async function doLogout() {
-  if (_auth) await _auth.signOut();
-  document.getElementById('settings-modal')?.classList.add('hidden');
-  document.getElementById('profile-modal')?.classList.add('hidden');
-}
-
-// ─── PROFILE ──────────────────────────────────────
-function showProfile() {
-  const user = _auth?.currentUser;
-  if (!user) return;
-  const name = user.displayName || user.email?.split('@')[0] || 'مستخدم';
-  document.getElementById('profile-avatar').textContent = name.charAt(0).toUpperCase();
-  if (user.photoURL) {
-    document.getElementById('profile-avatar').innerHTML = `<img src="${user.photoURL}" class="w-full h-full object-cover rounded-full">`;
-  }
-  document.getElementById('profile-name').textContent = name;
-  document.getElementById('profile-email').textContent = user.email || '';
-  const verified = document.getElementById('profile-verified');
-  verified.textContent = user.emailVerified ? '✅ بريد موثّق' : '⚠️ بريد غير موثّق';
-  verified.style.cssText = user.emailVerified
-    ? 'background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:9999px;'
-    : 'background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:9999px;';
-  const joined = user.metadata?.creationTime
-    ? new Date(user.metadata.creationTime).toLocaleDateString('ar-SA')
-    : '—';
-  document.getElementById('profile-joined').textContent = joined;
-  const providerMap = { 'google.com': 'Google', 'password': 'بريد إلكتروني' };
-  const provider = user.providerData?.[0]?.providerId || 'password';
-  document.getElementById('profile-provider').textContent = providerMap[provider] || provider;
-  document.getElementById('profile-modal').classList.remove('hidden');
-  lucide.createIcons();
-}
-
-// ─── SETTINGS ─────────────────────────────────────
-function showSettings() {
-  const user = _auth?.currentUser;
-  if (!user) return;
-  document.getElementById('settings-name').value = user.displayName || '';
-  document.getElementById('settings-pass').value = '';
-  showSettingsMsg('', '');
-  document.getElementById('settings-modal').classList.remove('hidden');
-  lucide.createIcons();
-}
-
-function showSettingsMsg(text, type) {
-  const el = document.getElementById('settings-msg');
-  if (!text) { el.classList.add('hidden'); return; }
-  el.textContent = text;
-  el.className = `mb-4 px-4 py-2.5 rounded-lg text-sm text-center font-semibold ${
-    type === 'error' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
-  }`;
-}
-
-async function saveSettings() {
-  const user = _auth?.currentUser;
-  if (!user) return;
-  const name = document.getElementById('settings-name').value.trim();
-  const pass = document.getElementById('settings-pass').value;
-  try {
-    if (name && name !== user.displayName) {
-      await user.updateProfile({ displayName: name });
-    }
-    if (pass) {
-      if (pass.length < 6) { showSettingsMsg('كلمة المرور يجب أن تكون ٦ أحرف على الأقل', 'error'); return; }
-      await user.updatePassword(pass);
-    }
-    updateNavUser(user);
-    showSettingsMsg('✅ تم حفظ التغييرات بنجاح', 'success');
-  } catch(e) {
-    const msgs = {
-      'auth/requires-recent-login': 'يجب إعادة تسجيل الدخول لتغيير كلمة المرور',
-      'auth/weak-password': 'كلمة المرور ضعيفة جداً'
-    };
-    showSettingsMsg(msgs[e.code] || 'حدث خطأ أثناء الحفظ', 'error');
-  }
 }
 </script>
 </body>
