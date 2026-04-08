@@ -1621,6 +1621,9 @@ const pageData = {
   }
 };
 
+// ─── BACKEND ─────────────────────────────────────────
+const BACKEND = 'https://hafiz-production.up.railway.app';
+
 // ─── STATE ──────────────────────────────────────────
 let currentPage = 1;
 let currentFontSize = 28;
@@ -1631,6 +1634,13 @@ let isPlaying = false;
 let recTimerInterval = null;
 let recSeconds = 0;
 let currentView = 'dashboard';
+
+// ─── HAFIZ SESSION STATE ─────────────────────────────
+let hafizSessionId = null;
+let mediaRecorder = null;
+let audioChunks = [];
+let currentAyahCode = null;
+let sessionAyahsEvaluated = [];
 
 // ─── INIT ───────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
@@ -1986,14 +1996,226 @@ function togglePlay() {
   lucide.createIcons();
 }
 
-function toggleRecording() {
-  // Feature coming soon — show early access banner instead
-  document.getElementById('early-access-banner')?.scrollIntoView({behavior:'smooth'});
-  const toast = document.createElement('div');
-  toast.className = 'fixed bottom-20 lg:bottom-4 right-4 bg-slate-800 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-lg z-50 fade-in';
-  toast.textContent = '🎙️ ميزة التصحيح الصوتي قادمة قريباً';
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
+// ─── TOAST ───────────────────────────────────────────
+function showToast(msg, type = 'info') {
+  const bg = type === 'error' ? 'bg-red-700' : type === 'success' ? 'bg-emerald-700' : 'bg-slate-800';
+  const t = document.createElement('div');
+  t.className = `fixed bottom-20 lg:bottom-4 right-4 ${bg} text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-lg z-50 fade-in`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// ─── TIMER ───────────────────────────────────────────
+function startRecTimer() {
+  recSeconds = 0;
+  clearInterval(recTimerInterval);
+  recTimerInterval = setInterval(() => {
+    recSeconds++;
+    const m = Math.floor(recSeconds / 60);
+    const s = recSeconds % 60;
+    const el = document.getElementById('rec-timer');
+    if (el) el.textContent = `${toArabicNum(m)}:${toArabicNum(s).padStart(2,'٠')}`;
+  }, 1000);
+}
+function stopRecTimer() {
+  clearInterval(recTimerInterval);
+  recTimerInterval = null;
+}
+
+// ─── AYAH CODE HELPER ────────────────────────────────
+function getFirstAyahCodeForCurrentPage() {
+  if (!chaptersData) return '001001';
+  let bestSurah = 1, bestPage = 0;
+  for (const [id, ch] of Object.entries(chaptersData)) {
+    const p0 = (ch.pages || [])[0];
+    if (p0 && p0 <= currentPage && p0 > bestPage) {
+      bestPage = p0;
+      bestSurah = parseInt(id);
+    }
+  }
+  return String(bestSurah).padStart(3,'0') + '001';
+}
+
+// ─── START SESSION ───────────────────────────────────
+async function startHafizSession() {
+  currentAyahCode = getFirstAyahCodeForCurrentPage();
+  sessionAyahsEvaluated = [];
+  try {
+    const res = await fetch(`${BACKEND}/api/v1/session/start`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ ayah_code: currentAyahCode, model_size: 'small' })
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    hafizSessionId = data.session_id;
+    return true;
+  } catch(e) {
+    console.error('Session start error:', e);
+    showToast('خطأ في الاتصال بالخادم', 'error');
+    return false;
+  }
+}
+
+// ─── RECORD UI ───────────────────────────────────────
+function updateRecordUI(recording) {
+  const btn1 = document.getElementById('record-btn');
+  const btn2 = document.getElementById('rec-btn-main');
+  const status = document.getElementById('rec-status');
+  const banner = document.getElementById('early-access-banner');
+
+  if (recording) {
+    [btn1, btn2].forEach(b => b && b.classList.replace('bg-emerald-600','bg-red-600'));
+    if (btn1) btn1.innerHTML = '<i data-lucide="square" style="width:13px;height:13px;fill:white;"></i> إيقاف التسجيل';
+    if (btn2) btn2.innerHTML = '<i data-lucide="square" style="width:32px;height:32px;fill:white;"></i><span class="text-xs font-semibold">إيقاف</span>';
+    status?.classList.remove('hidden');
+    banner?.classList.add('hidden');
+  } else {
+    [btn1, btn2].forEach(b => b && b.classList.replace('bg-red-600','bg-emerald-600'));
+    if (btn1) btn1.innerHTML = '<i data-lucide="circle" style="width:13px;height:13px;fill:white;"></i> ابدأ التسجيل';
+    if (btn2) btn2.innerHTML = '<i data-lucide="mic" style="width:32px;height:32px;"></i><span class="text-xs font-semibold">ابدأ</span>';
+    status?.classList.add('hidden');
+  }
+  lucide.createIcons();
+}
+
+// ─── EVALUATE RESPONSE HELPERS ───────────────────────
+const _LABEL_AR = {
+  VALID:'صحيح', VALID_TOLERANT:'صحيح مع تحفظ', VALID_VARIANT:'قراءة مقبولة',
+  PRONUNCIATION_ISSUE:'خطأ في النطق', MADD_ERROR:'خطأ في المد',
+  POSSIBLE_WORD_SUBSTITUTION:'كلمة مختلفة', MIXED_ERROR:'خطأ مركب',
+  REVIEW_NEEDED:'يحتاج مراجعة', SEQUENCE_ERROR:'خطأ في الترتيب',
+  SESSION_ERROR:'خطأ في الجلسة', ASR_ARTIFACT:'لم تُفهم التلاوة'
+};
+function labelAr(l) { return _LABEL_AR[l] || l || ''; }
+function actionIcon(a) { return {ADVANCE:'✅',REPEAT:'🔴',REVIEW:'⚠️',HOLD:'⏸️'}[a] || '🎙️'; }
+function actionColor(a) {
+  return {
+    ADVANCE:'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800',
+    REPEAT:'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
+    REVIEW:'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800',
+    HOLD:'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
+  }[a] || 'bg-slate-100 border-slate-200';
+}
+function actionDesc(a, l) {
+  return {
+    ADVANCE:'أحسنت — الآية صحيحة!',
+    REPEAT:`يوجد خطأ — ${labelAr(l)}`,
+    REVIEW:`مراجعة مطلوبة — ${labelAr(l)}`,
+    HOLD:'توقف — تحقق من موضعك في القرآن'
+  }[a] || labelAr(l);
+}
+
+// ─── SHOW EVALUATION RESULT ──────────────────────────
+function showEvaluationResult(r) {
+  const el = document.getElementById('recitation-results');
+  el.classList.remove('hidden');
+
+  const errorsHtml = (r.word_errors?.length)
+    ? `<div class="mt-2 text-xs flex flex-wrap gap-1" style="color:var(--text-muted)">
+        الكلمات الخاطئة:
+        ${r.word_errors.map(e => {
+          const w = typeof e === 'string' ? e : (e.word || e.text || '');
+          return `<span class="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-2 py-0.5 rounded font-medium">${w}</span>`;
+        }).join('')}
+      </div>` : '';
+
+  const asrHtml = r.asr_text
+    ? `<div class="mt-1.5 text-xs italic" style="color:var(--text-muted)">ما سُمع: "${r.asr_text}"</div>` : '';
+
+  const nextHtml = (r.should_advance && r.expected_next_ayah_code)
+    ? `<div class="mt-1.5 text-xs text-emerald-600">التالي: سورة ${parseInt(r.expected_next_ayah_code.slice(0,3))} آية ${parseInt(r.expected_next_ayah_code.slice(3))}</div>` : '';
+
+  el.innerHTML = `
+    <h3 class="font-bold mb-3 text-emerald-600">نتيجة التحليل</h3>
+    <div class="flex items-start gap-3 p-3 rounded-xl border ${actionColor(r.action)}">
+      <span class="text-xl flex-shrink-0">${actionIcon(r.action)}</span>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold" style="color:var(--text)">${actionDesc(r.action, r.final_label)}</p>
+        ${errorsHtml}${asrHtml}${nextHtml}
+      </div>
+    </div>
+    <div class="flex gap-2 mt-3">
+      <button onclick="toggleRecording()" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors">
+        🎙️ ${r.should_advance ? 'الآية التالية' : 'أعد المحاولة'}
+      </button>
+      <button onclick="endSessionAndReport()" class="py-2 px-4 rounded-xl text-sm font-semibold transition-colors" style="background:var(--slate-bg);color:var(--text)">
+        تقرير
+      </button>
+    </div>
+  `;
+
+  if (r.should_advance && r.expected_next_ayah_code) {
+    currentAyahCode = r.expected_next_ayah_code;
+  }
+}
+
+// ─── TOGGLE RECORDING ────────────────────────────────
+async function toggleRecording() {
+  if (!isRecording) {
+    // ── START ──
+    if (!hafizSessionId) {
+      const ok = await startHafizSession();
+      if (!ok) return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunks = [];
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+        await evaluateRecording(blob);
+      };
+      mediaRecorder.start();
+      isRecording = true;
+      updateRecordUI(true);
+      startRecTimer();
+    } catch(e) {
+      console.error('Mic error:', e);
+      showToast('لا يمكن الوصول للميكروفون — تحقق من الإذن', 'error');
+    }
+  } else {
+    // ── STOP ──
+    isRecording = false;
+    updateRecordUI(false);
+    stopRecTimer();
+    // show loading
+    const el = document.getElementById('recitation-results');
+    el.classList.remove('hidden');
+    el.innerHTML = `<div class="flex items-center justify-center gap-3 py-6">
+      <div class="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+      <span class="text-sm" style="color:var(--text-muted)">جارٍ التحليل...</span>
+    </div>`;
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+  }
+}
+
+// ─── EVALUATE ────────────────────────────────────────
+async function evaluateRecording(blob) {
+  if (!hafizSessionId) return;
+  const form = new FormData();
+  form.append('session_id', hafizSessionId);
+  form.append('audio', blob, 'recording.webm');
+  try {
+    const res = await fetch(`${BACKEND}/api/v1/recitation/evaluate`, { method:'POST', body:form });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const result = await res.json();
+    currentAyahCode = result.current_ayah_code || currentAyahCode;
+    sessionAyahsEvaluated.push({
+      code: result.current_ayah_code,
+      action: result.action,
+      label: result.final_label,
+      should_advance: result.should_advance
+    });
+    showEvaluationResult(result);
+  } catch(e) {
+    console.error('Evaluate error:', e);
+    document.getElementById('recitation-results').innerHTML =
+      `<div class="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 text-sm">خطأ في الاتصال بالخادم — تحقق من اتصالك وحاول مجدداً</div>`;
+  }
 }
 
 function selectReciter(val, el) {
@@ -2031,10 +2253,102 @@ function showTafsir() {
 
 // ─── REPORT MODAL ────────────────────────────────────
 function showSessionReport() {
-  document.getElementById('report-modal').classList.add('open');
+  endSessionAndReport();
 }
 function closeReport() {
   document.getElementById('report-modal').classList.remove('open');
+}
+async function endSessionAndReport() {
+  document.getElementById('report-modal').classList.add('open');
+  const bodyEl = document.querySelector('#report-modal .p-5');
+  if (bodyEl) bodyEl.innerHTML = `<div class="flex items-center justify-center gap-3 py-10">
+    <div class="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+    <span class="text-sm" style="color:var(--text-muted)">جارٍ تحميل التقرير...</span>
+  </div>`;
+
+  let apiData = null;
+  if (hafizSessionId) {
+    try {
+      const res = await fetch(`${BACKEND}/api/v1/tracking/session/${hafizSessionId}/report`);
+      if (res.ok) apiData = await res.json();
+    } catch(e) { /* use local data */ }
+  }
+  renderSessionReport(apiData);
+}
+
+function renderSessionReport(apiData) {
+  const total = sessionAyahsEvaluated.length;
+  const advanced = sessionAyahsEvaluated.filter(a => a.should_advance).length;
+  const reviewed = sessionAyahsEvaluated.filter(a => a.action === 'REVIEW').length;
+  const repeated = sessionAyahsEvaluated.filter(a => a.action === 'REPEAT').length;
+  const pct = total > 0 ? Math.round((advanced / total) * 100) : 0;
+  const offset = Math.round(201 * (1 - pct / 100));
+  const level = pct >= 90 ? 'ممتاز' : pct >= 75 ? 'جيد جداً' : pct >= 60 ? 'جيد' : 'يحتاج تحسيناً';
+
+  // Update ring + header
+  const ringFill = document.querySelector('#report-modal .ring-fill');
+  if (ringFill) ringFill.setAttribute('stroke-dashoffset', offset);
+  const scoreSpan = document.querySelector('#report-modal .ring-wrap .absolute');
+  if (scoreSpan) scoreSpan.textContent = `${pct}٪`;
+  const levelEl = document.querySelector('#report-modal .text-3xl');
+  if (levelEl) levelEl.textContent = level;
+  const subtitleEl = document.querySelector('#report-modal .bg-gradient-to-r p');
+  if (subtitleEl) subtitleEl.textContent = `${total} آية مُقيَّمة`;
+
+  // Build ayah list
+  let ayahRows = '';
+  if (sessionAyahsEvaluated.length) {
+    ayahRows = sessionAyahsEvaluated.map(a => {
+      const icon = a.should_advance ? '✅' : (a.action === 'REVIEW' ? '⚠️' : '🔴');
+      const surahN = parseInt((a.code||'001001').slice(0,3));
+      const ayahN  = parseInt((a.code||'001001').slice(3));
+      const surahName = getSurahInfo(surahN).name;
+      return `<div class="flex items-center justify-between p-2.5 rounded-lg" style="background:var(--slate-bg)">
+        <span class="text-base">${icon}</span>
+        <span class="flex-1 text-sm font-semibold mx-3" style="color:var(--text)">${surahName} — ${toArabicNum(ayahN)}</span>
+        <span class="text-xs" style="color:var(--text-muted)">${labelAr(a.label)}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Word reports from API if available
+  let wordRows = '';
+  if (apiData?.word_reports?.length) {
+    wordRows = `<h4 class="font-bold text-sm mt-4 mb-2" style="color:var(--text)">تقرير التجويد الكلمي</h4>` +
+      apiData.word_reports.slice(0,10).map(wr => {
+        const hasIssue = wr.status === 'error' || wr.error;
+        return `<div class="flex items-center gap-2 p-2 rounded-lg ${hasIssue?'bg-amber-50 dark:bg-amber-900/20':'bg-green-50 dark:bg-green-900/20'}">
+          <span>${hasIssue?'⚠️':'✅'}</span>
+          <span class="text-sm font-medium" style="color:var(--text)">${wr.word||wr.word_key||''}</span>
+          <span class="text-xs mr-auto" style="color:var(--text-muted)">${wr.note||wr.message||''}</span>
+        </div>`;
+      }).join('');
+  }
+
+  const bodyEl = document.querySelector('#report-modal .p-5');
+  if (!bodyEl) return;
+  bodyEl.innerHTML = `
+    <div class="grid grid-cols-3 gap-3 text-center">
+      <div class="p-3 rounded-xl" style="background:var(--slate-bg)">
+        <div class="text-xl font-bold text-emerald-600">${toArabicNum(advanced)}</div>
+        <div class="text-xs" style="color:var(--text-muted)">آيات صحيحة</div>
+      </div>
+      <div class="p-3 rounded-xl" style="background:var(--slate-bg)">
+        <div class="text-xl font-bold text-amber-500">${toArabicNum(reviewed)}</div>
+        <div class="text-xs" style="color:var(--text-muted)">مراجعة</div>
+      </div>
+      <div class="p-3 rounded-xl" style="background:var(--slate-bg)">
+        <div class="text-xl font-bold text-red-500">${toArabicNum(repeated)}</div>
+        <div class="text-xs" style="color:var(--text-muted)">تكرار</div>
+      </div>
+    </div>
+    ${ayahRows ? `<h4 class="font-bold text-sm mt-4 mb-2" style="color:var(--text)">الآيات المقيَّمة</h4><div class="space-y-2">${ayahRows}</div>` : ''}
+    ${wordRows}
+    <button onclick="closeReport(); hafizSessionId=null; sessionAyahsEvaluated=[];"
+      class="w-full mt-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors">
+      إنهاء الجلسة وبدء جلسة جديدة
+    </button>
+  `;
 }
 
 // ─── CHAT ────────────────────────────────────────────
