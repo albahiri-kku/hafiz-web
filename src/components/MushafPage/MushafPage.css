@@ -40,25 +40,24 @@
 
 /* Lines */
 .mushaf-line {
-  display: flex;
-  flex-direction: row-reverse;
-  justify-content: space-between;
-  align-items: center;
+  display: block;
   width: 100%;
-  min-height: 52px;
+  text-align: justify;
+  text-align-last: justify;
+  direction: rtl;
   padding: 3px 0;
   border-bottom: 1px dotted rgba(0,0,0,0.06);
-  direction: rtl;
-  line-height: 1;
+  line-height: 2.4;
+  font-size: inherit;
 }
-
 .mushaf-line:last-child {
   border-bottom: none;
+  text-align-last: center;
 }
-
 .mushaf-line.centered,
 .mushaf-line.centered-page {
-  justify-content: center;
+  text-align: center;
+  text-align-last: center;
 }
 
 /* Words */
