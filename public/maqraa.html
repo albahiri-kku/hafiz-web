@@ -38,14 +38,14 @@
 * { font-family: 'Cairo', sans-serif; box-sizing: border-box; }
 body { background: var(--slate-bg); color: var(--text); transition: background .3s, color .3s; }
 
-/* Mushaf Font */
+/* Mushaf Page Fonts — QCF KFGQPC */
 @font-face {
-  font-family: 'KFGQPC';
-  src: url('https://cdn.jsdelivr.net/gh/mustafa0x/qpc-fonts@master/fonts/QCF_P001.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
+  font-family: 'QCF_BSML';
+  src: url('/fonts/pages/QCF_BSML.woff2') format('woff2');
+  font-display: block;
 }
+
+/* Pages loaded dynamically via JS */
 .font-mushaf { font-family: 'KFGQPC', 'Amiri Quran', 'Amiri', serif; }
 
 /* Tajweed Colors */
@@ -108,29 +108,49 @@ body { background: var(--slate-bg); color: var(--text); transition: background .
 
 /* Mushaf page */
 .mushaf-page {
-  background: var(--mushaf-bg);
-  border: 2px double var(--mushaf-border);
-  border-radius: .5rem;
-  padding: 2rem;
+  background: #FDF8F0;
+  border: 2px solid #C8A96E;
+  border-radius: 4px;
+  padding: 24px 20px;
   position: relative;
-  box-shadow: 0 4px 24px rgba(0,0,0,.12), inset 0 0 40px rgba(200,169,110,.06);
+  box-shadow:
+    0 2px 8px rgba(0,0,0,.15),
+    inset 0 0 60px rgba(200,169,110,.05);
+  min-height: 500px;
+}
+.dark .mushaf-page {
+  background: #1a1a2e;
+  border-color: #374151;
 }
 .mushaf-page::before {
-  content:'';
-  position:absolute; inset:6px;
-  border: 1px solid var(--mushaf-border);
-  border-radius:.25rem;
-  opacity:.4;
-  pointer-events:none;
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(200,169,110,.3);
+  border-radius: 2px;
+  pointer-events: none;
 }
+
+/* السطر */
 .mushaf-line {
-  border-bottom:1px dotted rgba(0,0,0,.08);
-  line-height:2.8;
-  text-align:justify;
-  padding:.15rem 0;
+  display: block;
+  text-align: justify;
+  text-align-last: justify;
+  direction: rtl;
+  line-height: 1;
+  margin-bottom: 0;
+  padding: 4px 0;
+  width: 100%;
 }
-.dark .mushaf-line { border-color:rgba(255,255,255,.06); }
-.mushaf-line:last-child { border-bottom:none; }
+
+/* الصفحة كلها */
+#verses-container {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  direction: rtl;
+}
 
 /* Verse */
 .verse-word {
@@ -827,8 +847,14 @@ button:focus-visible { outline:2px solid #059669; outline-offset:2px; }
         <div class="max-w-2xl mx-auto">
           
           <!-- Basmalah -->
-          <div id="basmalah" class="text-center mb-4 font-mushaf text-2xl" style="color:var(--text)">
-            بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ
+          <div id="basmalah" class="text-center mb-3" style="
+            font-family: 'QCF_BSML', 'KFGQPC', serif;
+            font-size: 28px;
+            line-height: 2;
+            color: var(--text);
+            letter-spacing: 0;
+          ">
+            ﰡ
           </div>
 
           <!-- Verses -->
@@ -1531,7 +1557,7 @@ const pageData = {
 
 // ─── STATE ──────────────────────────────────────────
 let currentPage = 1;
-let currentFontSize = 24;
+let currentFontSize = 28;
 let isDark = false;
 let tajweedEnabled = true;
 let isRecording = false;
@@ -1634,9 +1660,25 @@ function goToSurah(id) {
 // ─── PAGE RENDER ─────────────────────────────────────
 function renderPage(page) {
   currentPage = page;
+
+  // Load page-specific font
+  const fontName = `QCF_P${String(page).padStart(3,'0')}`;
+  if (!document.querySelector(`style[data-font="${fontName}"]`)) {
+    const style = document.createElement('style');
+    style.setAttribute('data-font', fontName);
+    style.textContent = `
+      @font-face {
+        font-family: '${fontName}';
+        src: url('/fonts/pages/QCF_P${String(page).padStart(3,'0')}.woff2') format('woff2');
+        font-display: block;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   const data = pageData[page] || pageData[1];
-  
-  // Update UI
+
+  // Update UI elements
   document.getElementById('current-page-num').textContent = toArabicNum(page);
   const pj = document.getElementById('page-jump');
   if (pj) pj.value = page;
@@ -1651,20 +1693,27 @@ function renderPage(page) {
   document.getElementById('footer-page').textContent = toArabicNum(page);
   document.getElementById('basmalah').style.display = data.hasBasmalah ? 'block' : 'none';
 
-  // Render verses
+  // Render verses using page font
   const container = document.getElementById('verses-container');
+  container.style.fontFamily = `'${fontName}', 'KFGQPC', 'Amiri Quran', serif`;
+  container.style.fontSize = currentFontSize + 'px';
+
   container.innerHTML = data.verses.map(v => {
     const words = v.text.split(' ');
     const wordSpans = words.map((word, i) => {
-      const rule = tajweedEnabled ? (v.tajweed || []).find(t => t.word === i) : null;
+      const rule = tajweedEnabled
+        ? (v.tajweed || []).find(t => t.word === i)
+        : null;
       const cls = rule ? rule.cls : '';
-      const tooltip = rule ? `<span class="tj-tooltip">${rule.tooltip}</span>` : '';
+      const tooltip = rule
+        ? `<span class="tj-tooltip">${rule.tooltip}</span>`
+        : '';
       return `<span class="verse-word ${cls}" onclick="showVerseModal(${v.number},'${escapeHtml(v.text)}')">${word}${tooltip}</span>`;
     }).join(' ');
-    return `<span class="inline">${wordSpans} <span class="verse-number" onclick="showVerseModal(${v.number},'${escapeHtml(v.text)}')">﴿${toArabicNum(v.number)}﴾</span> </span>`;
-  }).join('\n');
 
-  container.style.fontSize = currentFontSize + 'px';
+    return `<span class="mushaf-line">${wordSpans} <span class="verse-number" onclick="showVerseModal(${v.number},'${escapeHtml(v.text)}')">﴿${toArabicNum(v.number)}﴾</span></span>`;
+  }).join('');
+
   lucide.createIcons();
 }
 
