@@ -4,6 +4,6 @@
   "framework": "vite",
   "rewrites": [
     { "source": "/maqraa", "destination": "/maqraa.html" },
-    { "source": "/((?!maqraa).*)", "destination": "/index.html" }
+    { "source": "/((?!maqraa\\.html|maqraa).*)", "destination": "/index.html" }
   ]
 }
