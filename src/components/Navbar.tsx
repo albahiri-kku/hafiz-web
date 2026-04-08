@@ -32,7 +32,7 @@ export function Navbar() {
           </a>
           {/* CTA — last in DOM = far left in RTL */}
           <a
-            href="/maqraa.html"
+            href="/maqraa"
             className="bg-emerald-800 hover:bg-emerald-700 text-white font-semibold px-5 py-2 rounded-xl transition-colors"
             style={{ fontFamily: "Noto Sans Arabic, sans-serif", fontSize: "0.95rem" }}
           >

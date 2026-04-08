@@ -2,11 +2,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
-  "routes": [
-    { "src": "/admin",       "dest": "/admin.html" },
-    { "src": "/admin.html",  "dest": "/admin.html" },
-    { "src": "/maqraa",      "dest": "/maqraa.html" },
-    { "src": "/maqraa.html", "dest": "/maqraa.html" },
-    { "src": "/(.*)",        "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

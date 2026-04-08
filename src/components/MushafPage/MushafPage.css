@@ -1,0 +1,204 @@
+/* MushafPage v5 — QCF KFGQPC per-page fonts */
+
+.mushaf-page {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  background: #FDF8F0;
+  border: 2px solid #C8A96E;
+  border-radius: 4px;
+  padding: 0 0 32px;
+  box-shadow:
+    0 4px 24px rgba(0,0,0,0.15),
+    inset 0 0 60px rgba(200,169,110,0.06);
+}
+
+.mushaf-frame {
+  position: relative;
+  padding: 28px 24px 0;
+}
+
+.mushaf-frame::before {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border: 1px solid rgba(200,169,110,0.35);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.mushaf-frame-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  gap: 0;
+}
+
+/* Lines */
+.mushaf-line {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  min-height: 52px;
+  padding: 3px 0;
+  border-bottom: 1px dotted rgba(0,0,0,0.06);
+  direction: rtl;
+  line-height: 1;
+}
+
+.mushaf-line:last-child {
+  border-bottom: none;
+}
+
+.mushaf-line.centered,
+.mushaf-line.centered-page {
+  justify-content: center;
+}
+
+/* Words */
+.mushaf-word {
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.15s, color 0.2s;
+  user-select: none;
+  display: inline;
+}
+
+.mushaf-word:hover {
+  background: rgba(5, 150, 105, 0.1);
+}
+
+.word-current {
+  color: #C9A84C !important;
+  font-weight: bold;
+  text-shadow: 0 0 8px rgba(201,168,76,0.5);
+}
+
+.word-error {
+  color: #E74C3C !important;
+}
+
+.word-hidden {
+  color: transparent !important;
+  background: rgba(0,0,0,0.08);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Ayah group */
+.mushaf-ayah-group {
+  display: inline;
+  border-radius: 6px;
+  padding: 2px 4px;
+  transition: background-color 0.3s ease;
+}
+
+/* Surah banner */
+.mushaf-surah-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: linear-gradient(135deg, #1a1a1a, #2a1a0a);
+  border: 1px solid #C8A96E;
+  border-radius: 4px;
+  padding: 6px 12px;
+  margin: 4px 0;
+}
+
+.mushaf-surah-banner-inner {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to left, transparent, rgba(200,169,110,0.5), transparent);
+}
+
+.mushaf-surah-banner-text {
+  color: #C8A96E;
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.mushaf-surah-banner-svg-right {
+  width: 52px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.mushaf-surah-banner-svg-right svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Basmala */
+.mushaf-basmallah-line {
+  padding: 8px 0 4px;
+}
+
+.mushaf-basmallah-text {
+  font-size: 32px;
+  color: #2D3A2D;
+  text-align: center;
+  font-family: 'Scheherazade New', 'Amiri', serif;
+  line-height: 1.6;
+}
+
+/* Page number */
+.mushaf-page-number {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  color: #888;
+  font-family: 'Cairo', sans-serif;
+  letter-spacing: 1px;
+}
+
+/* Skeleton loading */
+.mushaf-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 8px 0;
+}
+
+.mushaf-skeleton-line {
+  height: 28px;
+  background: linear-gradient(90deg, #e8dfc8 25%, #f0e8d0 50%, #e8dfc8 75%);
+  background-size: 200% 100%;
+  animation: mushaf-shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+  align-self: flex-end;
+}
+
+@keyframes mushaf-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .mushaf-page {
+    background: #1a1a2e;
+    border-color: #374151;
+  }
+  .mushaf-basmallah-text {
+    color: #e5d5a0;
+  }
+  .mushaf-page-number {
+    color: #6b7280;
+  }
+  .mushaf-skeleton-line {
+    background: linear-gradient(90deg, #2a2a3e 25%, #32324a 50%, #2a2a3e 75%);
+    background-size: 200% 100%;
+  }
+}
