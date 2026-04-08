@@ -45,10 +45,13 @@
   text-align: justify;
   text-align-last: justify;
   direction: rtl;
-  padding: 3px 0;
+  unicode-bidi: plaintext;
+  padding: 2px 0;
   border-bottom: 1px dotted rgba(0,0,0,0.06);
-  line-height: 2.4;
-  font-size: inherit;
+  line-height: 2.6;
+  overflow: visible;
+  white-space: normal;
+  word-spacing: normal;
 }
 .mushaf-line:last-child {
   border-bottom: none;
@@ -60,13 +63,16 @@
   text-align-last: center;
 }
 
+/* Ayah group — must stay inline for justify to work */
+.mushaf-ayah-group {
+  display: inline;
+}
+
 /* Words */
 .mushaf-word {
-  cursor: pointer;
-  border-radius: 3px;
-  transition: background 0.15s, color 0.2s;
-  user-select: none;
   display: inline;
+  cursor: pointer;
+  padding: 0 1px;
 }
 
 .mushaf-word:hover {

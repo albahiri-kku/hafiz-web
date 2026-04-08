@@ -249,11 +249,9 @@ function MushafLineView({
             id={`ayah-${group.ayahCode}`}
             className="mushaf-ayah-group"
             style={{
-              backgroundColor: isCurrentAyah ? 'rgba(201,168,76,0.08)' : 'transparent',
-              borderRadius: '6px',
-              padding: '2px 4px',
+              backgroundColor: isCurrentAyah ? 'rgba(201,168,76,0.08)' : undefined,
+              borderRadius: isCurrentAyah ? '4px' : undefined,
               transition: 'background-color 0.3s ease',
-              display: 'inline',
             }}
           >
             {group.words.map(({ w, idx }) => {
