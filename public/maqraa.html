@@ -39,7 +39,10 @@ body { background: var(--slate-bg); color: var(--text); transition: background .
 /* Mushaf Font */
 @font-face {
   font-family: 'KFGQPC';
-  src: url('https://fonts.qurancomplex.gov.sa/wp-content/uploads/2019/09/UthmanicHafs1Ver09.otf') format('opentype');
+  src: url('https://cdn.jsdelivr.net/gh/mustafa0x/qpc-fonts@master/fonts/QCF_P001.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
 }
 .font-mushaf { font-family: 'KFGQPC', 'Amiri Quran', 'Amiri', serif; }
 
@@ -1654,7 +1657,7 @@ async function sendChatMessage() {
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
           max_tokens: 1000,
-          system: `أنت "حافظ"، مساعد تجويدي متخصص في علم التجويد وأحكامه. أجب دائماً باللغة العربية الفصحى بأسلوب علمي دقيق. اشرح الأحكام التجويدية بوضوح مع ذكر الأمثلة القرآنية. لا تتجاوز علم التجويد وعلوم القرآن.`,
+          system: `أنت "حافظ"، مساعد تجويدي متخصص في علم التجويد وأحكامه. أجب دائماً باللغة العربية الفصحى بأسلوب علمي دقيق واشرح الأحكام التجويدية بوضوح مع ذكر الأمثلة القرآنية. لكل سؤال أعطِ جواباً مختلفاً ومخصصاً للسؤال تحديداً. لا تتجاوز علم التجويد وعلوم القرآن.`,
           messages: [{ role: 'user', content: msg }]
         })
       });
@@ -1690,10 +1693,27 @@ async function sendChatMessage() {
 }
 
 function findLocalResponse(msg) {
-  for (const [key, val] of Object.entries(tajweedResponses)) {
-    if (key !== 'default' && msg.includes(key)) return val;
-  }
-  return tajweedResponses.default;
+  if (msg.includes('مد واجب') || msg.includes('واجب متصل'))
+    return 'المد الواجب المتصل: أن يجتمع حرف المد والهمزة في كلمة واحدة، ويمد 4 أو 5 حركات وجوباً. مثاله: جاء، شاء، السماء، جيء.';
+  if (msg.includes('مد') || msg.includes('المد'))
+    return 'المد أنواع: طبيعي (حركتان)، واجب متصل (4-5 حركات)، جائز منفصل (2-6 حركات)، لازم (6 حركات). السبب: الهمز أو السكون.';
+  if (msg.includes('قلقلة'))
+    return 'القلقلة: اهتزاز صوتي عند سكون أحد حروف (قطب جد). صغرى في الوصل وكبرى عند الوقف. مثال: يَقْطَعُ، الحَقّ.';
+  if (msg.includes('غنة'))
+    return 'الغنة: صوت أنفي مقداره حركتان يلازم النون والميم المشددتين. وتظهر في الإخفاء والإدغام بغنة والإقلاب.';
+  if (msg.includes('إخفاء'))
+    return 'الإخفاء الحقيقي: إخفاء النون الساكنة أو التنوين عند 15 حرفاً مع إبقاء الغنة. حروفه: ص ذ ث ك ج ش ق س د ط ز ف ت ض ظ.';
+  if (msg.includes('إدغام'))
+    return 'الإدغام: إدخال النون الساكنة في الحرف التالي. بغنة عند: ي ن م و. وبلا غنة عند: ل ر. مثال: مَن يَقول، مِن رَبك.';
+  if (msg.includes('إقلاب'))
+    return 'الإقلاب: قلب النون الساكنة أو التنوين ميماً مخفاةً عند الباء مع الغنة. مثاله: أنبياء، سميع بصير.';
+  if (msg.includes('وقف'))
+    return 'الوقف: قطع الصوت عند نهاية الكلمة. أنواعه: تام (م)، كافٍ، حسن، قبيح. وعلامة لا (ممنوع الوقف).';
+  if (msg.includes('تفخيم'))
+    return 'التفخيم: تسمين الحرف. حروف الاستعلاء دائماً مفخمة: خ ص ض غ ط ق ظ. ولفظ الجلالة يُفخم بعد الفتح والضم.';
+  if (msg.includes('ترقيق'))
+    return 'الترقيق: تنحيف الحرف. جميع الحروف مرققة إلا حروف الاستعلاء. والراء تُرقق بعد الكسر وعند الوقف على بعض الكلمات.';
+  return 'يمكنني مساعدتك في: المدود، الغنة، القلقلة، الوقف، الإخفاء، الإدغام، الإقلاب، التفخيم والترقيق. ما الحكم الذي تودّ التعمق فيه؟';
 }
 
 function submitEarlyAccess() {
