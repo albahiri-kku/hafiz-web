@@ -72,7 +72,7 @@ export function HeroSection() {
         {/* CTA */}
         <div style={{ width: "fit-content", margin: "0 auto" }}>
           <a
-            href="#"
+            href="/maqraa.html"
             className="inline-block bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-900 text-white font-semibold rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5"
             style={{
               fontFamily: "Noto Sans Arabic, sans-serif",

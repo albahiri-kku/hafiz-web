@@ -1,0 +1,1809 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مقرأة حافظ</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:wght@400;700&family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+:root {
+  --emerald: #059669;
+  --emerald-dark: #047857;
+  --emerald-light: #d1fae5;
+  --gold: #b45309;
+  --gold-light: #fef3c7;
+  --slate-bg: #f8fafc;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --mushaf-bg: #fdf8f0;
+  --mushaf-border: #c8a96e;
+}
+.dark {
+  --emerald-light: #064e3b;
+  --gold-light: #451a03;
+  --slate-bg: #0f172a;
+  --card: #1e293b;
+  --border: #334155;
+  --text: #f1f5f9;
+  --text-muted: #94a3b8;
+  --mushaf-bg: #1a1a2e;
+  --mushaf-border: #374151;
+}
+* { font-family: 'Cairo', sans-serif; box-sizing: border-box; }
+body { background: var(--slate-bg); color: var(--text); transition: background .3s, color .3s; }
+
+/* Mushaf Font */
+@font-face {
+  font-family: 'KFGQPC';
+  src: url('https://fonts.qurancomplex.gov.sa/wp-content/uploads/2019/09/UthmanicHafs1Ver09.otf') format('opentype');
+}
+.font-mushaf { font-family: 'KFGQPC', 'Amiri Quran', 'Amiri', serif; }
+
+/* Tajweed Colors */
+.tj-madd-wajib   { color: #b91c1c; }
+.tj-madd-jaiz    { color: #c2410c; }
+.tj-madd-natural { color: #a16207; }
+.tj-madd-lazim   { color: #7c2d12; }
+.tj-ghunna       { color: #15803d; }
+.tj-ikhfa        { color: #166534; }
+.tj-qalqala      { color: #1d4ed8; }
+.tj-tafkhim      { color: #6d28d9; }
+.tj-silent       { color: #6b7280; }
+.tj-idgham       { color: #0e7490; }
+.tj-iqlab        { color: #be185d; }
+
+/* Dark mode tajweed */
+.dark .tj-madd-wajib   { color: #fca5a5; }
+.dark .tj-madd-jaiz    { color: #fdba74; }
+.dark .tj-madd-natural { color: #fde047; }
+.dark .tj-ghunna       { color: #86efac; }
+.dark .tj-ikhfa        { color: #6ee7b7; }
+.dark .tj-qalqala      { color: #93c5fd; }
+.dark .tj-tafkhim      { color: #c4b5fd; }
+.dark .tj-silent       { color: #9ca3af; }
+.dark .tj-idgham       { color: #67e8f9; }
+.dark .tj-iqlab        { color: #f9a8d4; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+.dark ::-webkit-scrollbar-thumb { background: #475569; }
+
+/* Animations */
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes pulse-ring { 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.08);opacity:.8;} }
+@keyframes wave { 0%,100%{transform:scaleY(.4);} 50%{transform:scaleY(1);} }
+@keyframes flame { 0%,100%{transform:scale(1) rotate(-3deg);} 50%{transform:scale(1.15) rotate(3deg);} }
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+@keyframes slideIn { from{transform:translateX(100%);} to{transform:translateX(0);} }
+@keyframes slideUp { from{transform:translateY(100%);opacity:0;} to{transform:translateY(0);opacity:1;} }
+@keyframes shimmer { 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
+
+.fade-in { animation: fadeIn .4s ease both; }
+.flame-anim { animation: flame 1.5s ease-in-out infinite; }
+.blink-anim { animation: blink 2s infinite; }
+.wave-bar { width:3px; height:20px; background:var(--emerald); border-radius:2px; animation: wave 1s ease-in-out infinite; }
+.wave-bar:nth-child(2){animation-delay:.1s;height:14px;}
+.wave-bar:nth-child(3){animation-delay:.2s;height:20px;}
+.wave-bar:nth-child(4){animation-delay:.3s;height:16px;}
+.wave-bar:nth-child(5){animation-delay:.4s;height:10px;}
+
+/* Cards */
+.card { background:var(--card); border:1px solid var(--border); border-radius:1rem; transition:all .25s; }
+.card-hover:hover { transform:translateY(-3px); box-shadow:0 12px 30px rgba(0,0,0,.1); }
+
+/* Glass */
+.glass { background:rgba(255,255,255,.85); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,.3); }
+.dark .glass { background:rgba(30,41,59,.85); border-color:rgba(255,255,255,.08); }
+
+/* Mushaf page */
+.mushaf-page {
+  background: var(--mushaf-bg);
+  border: 2px double var(--mushaf-border);
+  border-radius: .5rem;
+  padding: 2rem;
+  position: relative;
+  box-shadow: 0 4px 24px rgba(0,0,0,.12), inset 0 0 40px rgba(200,169,110,.06);
+}
+.mushaf-page::before {
+  content:'';
+  position:absolute; inset:6px;
+  border: 1px solid var(--mushaf-border);
+  border-radius:.25rem;
+  opacity:.4;
+  pointer-events:none;
+}
+.mushaf-line {
+  border-bottom:1px dotted rgba(0,0,0,.08);
+  line-height:2.8;
+  text-align:justify;
+  padding:.15rem 0;
+}
+.dark .mushaf-line { border-color:rgba(255,255,255,.06); }
+.mushaf-line:last-child { border-bottom:none; }
+
+/* Verse */
+.verse-word {
+  cursor:pointer;
+  display:inline-block;
+  padding:0 2px;
+  border-radius:3px;
+  transition:background .2s;
+  position:relative;
+}
+.verse-word:hover { background:rgba(5,150,105,.12); }
+.verse-word.active { background:rgba(5,150,105,.2); }
+.verse-word.error { background:rgba(220,38,38,.12); }
+.verse-number {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:1.6em; height:1.6em;
+  font-size:.65em;
+  color:#059669;
+  font-family:'Amiri',serif;
+  cursor:pointer;
+}
+
+/* Tajweed tooltip */
+.tj-tooltip {
+  position:absolute; bottom:110%; right:50%; transform:translateX(50%);
+  background:#1e293b; color:#fff;
+  font-size:11px; padding:3px 8px;
+  border-radius:6px; white-space:nowrap;
+  opacity:0; pointer-events:none;
+  transition:opacity .2s;
+  font-family:'Cairo',sans-serif;
+  z-index:100;
+}
+.dark .tj-tooltip { background:#0f172a; }
+.verse-word:hover .tj-tooltip { opacity:1; }
+
+/* Progress ring */
+.ring-wrap { position:relative; display:inline-flex; align-items:center; justify-content:center; }
+.ring-bg { stroke:#e2e8f0; }
+.dark .ring-bg { stroke:#334155; }
+.ring-fill { stroke:#059669; stroke-linecap:round; transition:stroke-dashoffset .6s ease; }
+
+/* Sidebar */
+#sidebar {
+  transform: translateX(110%);
+  transition: transform .3s ease;
+}
+#sidebar.open { transform: translateX(0); }
+
+/* Chat panel */
+#chat-panel {
+  transform: translateX(110%);
+  transition: transform .3s ease;
+}
+#chat-panel.open { transform: translateX(0); }
+
+/* Progress panel */
+#progress-panel { display:none; }
+#progress-panel.open { display:block; animation:fadeIn .3s ease; }
+
+/* Report modal */
+#report-modal { display:none; }
+#report-modal.open { display:flex; animation:fadeIn .3s ease; }
+
+/* Verse modal */
+#verse-modal { display:none; }
+#verse-modal.open { display:flex; animation:fadeIn .2s ease; }
+
+/* Bottom tab active */
+.btab.active { color:#059669; }
+.btab.active span { color:#059669; }
+
+/* Service card gradient orb */
+.orb {
+  position:absolute; width:80px; height:80px; border-radius:50%;
+  top:-20px; left:-20px; opacity:.15; pointer-events:none;
+  transition:transform .3s;
+}
+.card-hover:hover .orb { transform:scale(2); }
+
+/* Recording pulse */
+@keyframes rec-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.4);} 70%{box-shadow:0 0 0 10px rgba(220,38,38,0);} }
+.rec-pulse { animation: rec-pulse 1.2s infinite; }
+
+/* Notification badge */
+.notif-badge { animation: blink 2s infinite; }
+
+/* Legend dot */
+.legend-dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-left:4px; }
+
+/* Stats bar */
+.stat-bar { height:6px; border-radius:3px; background:#e2e8f0; overflow:hidden; }
+.dark .stat-bar { background:#334155; }
+.stat-fill { height:100%; border-radius:3px; transition:width .6s ease; }
+
+/* Mobile responsive helpers */
+@media(max-width:1023px) {
+  .mushaf-page { padding:1rem; }
+  .font-mushaf { font-size:20px !important; }
+}
+@media(max-width:640px) {
+  .mushaf-page { padding:.75rem; }
+}
+
+/* Surah header banner */
+.surah-banner {
+  background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
+  position:relative; overflow:hidden;
+}
+.surah-banner::after {
+  content:''; position:absolute; inset:0;
+  background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Input */
+input[type=range] { accent-color: #059669; }
+input:focus { outline:2px solid #059669; outline-offset:1px; }
+select:focus { outline:2px solid #059669; outline-offset:1px; }
+button:focus-visible { outline:2px solid #059669; outline-offset:2px; }
+
+/* Chat bubble */
+.chat-user { background:linear-gradient(135deg,#059669,#0d9488); color:#fff; border-radius:1rem 1rem 0 1rem; }
+.chat-hafiz { background:var(--card); border:1px solid var(--border); border-radius:1rem 1rem 1rem 0; }
+
+/* Sticky nav */
+#main-nav { position:fixed; top:0; left:0; right:0; z-index:50; }
+
+/* View transitions */
+.view { display:none; }
+.view.active { display:block; animation:fadeIn .3s ease; }
+</style>
+</head>
+
+<body class="min-h-screen">
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- TOP NAV -->
+<!-- ═══════════════════════════════════════════════════ -->
+<nav id="main-nav" class="glass border-b border-[var(--border)] h-14">
+  <div class="flex items-center justify-between h-full px-3 md:px-5 max-w-full">
+
+    <!-- Back to Home -->
+    <a href="/"
+      class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors flex items-center gap-1.5 text-sm font-medium"
+      style="color:var(--text-muted);">
+      <i data-lucide="arrow-right" style="width:16px;height:16px;"></i>
+      <span class="hidden sm:block">الرئيسية</span>
+    </a>
+
+    <!-- Logo -->
+    <div class="flex items-center gap-2.5">
+      <div class="w-8 h-8 bg-gradient-to-br from-emerald-600 to-teal-700 rounded-lg flex items-center justify-center shadow-sm">
+        <span class="text-white font-bold text-base">ح</span>
+      </div>
+      <span class="font-bold text-base hidden sm:block" style="color:var(--text)">مقرأة حافظ</span>
+    </div>
+
+    <!-- View Tabs (desktop) -->
+    <div class="hidden lg:flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-1 gap-1">
+      <button onclick="showView('dashboard')" id="tab-dashboard" class="view-tab px-4 py-1.5 rounded-lg text-sm font-semibold transition-all">الرئيسية</button>
+      <button onclick="showView('mushaf')" id="tab-mushaf" class="view-tab px-4 py-1.5 rounded-lg text-sm font-semibold transition-all">المصحف</button>
+      <button onclick="showView('recitation')" id="tab-recitation" class="view-tab px-4 py-1.5 rounded-lg text-sm font-semibold transition-all">التلاوة</button>
+      <button onclick="showView('progress')" id="tab-progress" class="view-tab px-4 py-1.5 rounded-lg text-sm font-semibold transition-all">التقدم</button>
+    </div>
+
+    <!-- Right Actions -->
+    <div class="flex items-center gap-1.5">
+      <!-- Lang Toggle -->
+      <button onclick="toggleLang()" class="px-2 py-1 text-xs font-bold rounded-lg border border-[var(--border)] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" style="color:var(--text-muted)">EN</button>
+
+      <!-- Notifications -->
+      <button onclick="toggleNotifPanel()" class="relative p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+        <i data-lucide="bell" class="w-4.5 h-4.5" style="color:var(--text-muted); width:18px;height:18px;"></i>
+        <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full notif-badge"></span>
+      </button>
+
+      <!-- Theme -->
+      <button onclick="toggleTheme()" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+        <i data-lucide="moon" id="icon-moon" class="w-4.5 h-4.5" style="color:var(--text-muted); width:18px;height:18px;"></i>
+        <i data-lucide="sun" id="icon-sun" class="w-4.5 h-4.5 hidden" style="color:var(--text-muted); width:18px;height:18px;"></i>
+      </button>
+
+      <!-- Notifications Settings -->
+      <button onclick="toggleReminderModal()" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" title="تنبيهات التذكير">
+        <i data-lucide="clock" style="width:18px;height:18px;color:var(--text-muted);"></i>
+      </button>
+
+      <!-- Avatar -->
+      <div class="relative">
+        <button onclick="toggleUserMenu()" class="flex items-center gap-2 p-1 pr-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+          <div class="w-7 h-7 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xs">أ</div>
+          <span class="hidden sm:block text-sm font-semibold" style="color:var(--text)">أحمد</span>
+        </button>
+        <div id="user-menu" class="hidden absolute top-full left-0 mt-1 w-44 card shadow-xl py-1 z-50">
+          <a href="#" class="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm transition-colors" style="color:var(--text)">
+            <i data-lucide="user" style="width:15px;height:15px;"></i> الملف الشخصي
+          </a>
+          <a href="#" class="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm transition-colors" style="color:var(--text)">
+            <i data-lucide="settings" style="width:15px;height:15px;"></i> الإعدادات
+          </a>
+          <div class="border-t border-[var(--border)] my-1"></div>
+          <a href="#" class="flex items-center gap-2 px-4 py-2.5 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm text-red-600 transition-colors">
+            <i data-lucide="log-out" style="width:15px;height:15px;"></i> تسجيل الخروج
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- MAIN CONTENT AREA -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="pt-14 pb-16 lg:pb-0 min-h-screen">
+
+<!-- ─────────────────────────────────────────────────── -->
+<!-- VIEW 1: DASHBOARD -->
+<!-- ─────────────────────────────────────────────────── -->
+<div id="view-dashboard" class="view active">
+  <div class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+    <!-- Welcome -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold mb-1" style="color:var(--text)">السلام عليكم، أحمد 👋</h1>
+        <p style="color:var(--text-muted)" class="text-sm">استمر في رحلتك مع كتاب الله — لديك <span class="text-emerald-600 font-bold">١٢ يوماً</span> متتالية</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-full">
+          <span class="text-lg flame-anim">🔥</span>
+          <span class="font-bold text-amber-700 dark:text-amber-400">١٢</span>
+          <span class="text-xs text-amber-600 dark:text-amber-500">يوماً</span>
+        </div>
+        <button onclick="showView('recitation')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-sm transition-colors flex items-center gap-2 shadow-sm shadow-emerald-200 dark:shadow-none">
+          <i data-lucide="play" style="width:15px;height:15px;"></i>
+          الجلسة اليومية
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="card p-4 text-center">
+        <div class="text-2xl font-bold text-emerald-600 mb-1">٨٥٪</div>
+        <div class="text-xs" style="color:var(--text-muted)">متوسط الدقة</div>
+      </div>
+      <div class="card p-4 text-center">
+        <div class="text-2xl font-bold text-blue-600 mb-1">٤٢</div>
+        <div class="text-xs" style="color:var(--text-muted)">ساعة تلاوة</div>
+      </div>
+      <div class="card p-4 text-center">
+        <div class="text-2xl font-bold text-violet-600 mb-1">٣</div>
+        <div class="text-xs" style="color:var(--text-muted)">ختمات مكتملة</div>
+      </div>
+      <div class="card p-4 text-center">
+        <div class="text-2xl font-bold text-amber-600 mb-1">٧</div>
+        <div class="text-xs" style="color:var(--text-muted)">سور محفوظة</div>
+      </div>
+    </div>
+
+    <!-- Services Grid -->
+    <div>
+      <h2 class="text-lg font-bold mb-4" style="color:var(--text)">خدمات المقرأة</h2>
+      <div class="grid grid-cols-2 lg:grid-cols-3 gap-3">
+
+        <!-- Mushaf -->
+        <div onclick="showView('mushaf')" class="card card-hover cursor-pointer p-5 relative overflow-hidden">
+          <div class="orb bg-emerald-400"></div>
+          <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center text-2xl mb-3 shadow-sm shadow-emerald-200">📖</div>
+          <h3 class="font-bold mb-1" style="color:var(--text)">المصحف الرقمي</h3>
+          <p class="text-xs leading-relaxed" style="color:var(--text-muted)">مصحف المدينة كاملاً مع ألوان التجويد والبحث</p>
+        </div>
+
+        <!-- Recitation -->
+        <div onclick="showView('recitation')" class="card card-hover cursor-pointer p-5 relative overflow-hidden">
+          <div class="orb bg-blue-400"></div>
+          <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-2xl mb-3 shadow-sm shadow-blue-200">🎙️</div>
+          <h3 class="font-bold mb-1" style="color:var(--text)">تصحيح التلاوة</h3>
+          <p class="text-xs leading-relaxed" style="color:var(--text-muted)">تحليل فوري لأخطاء التلاوة والتجويد بالذكاء الاصطناعي</p>
+          <span class="absolute top-3 left-3 text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full font-medium">جديد</span>
+        </div>
+
+        <!-- Hafiz Chat -->
+        <div onclick="openChat()" class="card card-hover cursor-pointer p-5 relative overflow-hidden">
+          <div class="orb bg-violet-400"></div>
+          <div class="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center text-2xl mb-3 shadow-sm shadow-violet-200">🤖</div>
+          <h3 class="font-bold mb-1" style="color:var(--text)">حافظ الذكي</h3>
+          <p class="text-xs leading-relaxed" style="color:var(--text-muted)">اسأل عن أي حكم تجويدي وستحصل على إجابة فورية</p>
+        </div>
+
+        <!-- Progress -->
+        <div onclick="showView('progress')" class="card card-hover cursor-pointer p-5 relative overflow-hidden">
+          <div class="orb bg-amber-400"></div>
+          <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center text-2xl mb-3 shadow-sm shadow-amber-200">📊</div>
+          <h3 class="font-bold mb-1" style="color:var(--text)">سجل التقدم</h3>
+          <p class="text-xs leading-relaxed" style="color:var(--text-muted)">تتبع تطورك وأبرز أخطائك وعدد الختمات</p>
+        </div>
+
+        <!-- Tajweed Colored Mushaf -->
+        <div onclick="openTajweedMushaf()" class="card card-hover cursor-pointer p-5 relative overflow-hidden">
+          <div class="orb bg-rose-400"></div>
+          <div class="w-12 h-12 bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl flex items-center justify-center text-2xl mb-3 shadow-sm shadow-rose-200">🌈</div>
+          <h3 class="font-bold mb-1" style="color:var(--text)">مصحف التجويد</h3>
+          <p class="text-xs leading-relaxed" style="color:var(--text-muted)">كلمات القرآن ملونة حسب أحكام التجويد</p>
+        </div>
+
+        <!-- Memorization -->
+        <div onclick="showMemMode()" class="card card-hover cursor-pointer p-5 relative overflow-hidden">
+          <div class="orb bg-cyan-400"></div>
+          <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center text-2xl mb-3 shadow-sm shadow-cyan-200">🧠</div>
+          <h3 class="font-bold mb-1" style="color:var(--text)">وضع الحفظ</h3>
+          <p class="text-xs leading-relaxed" style="color:var(--text-muted)">اختبر حفظك مع إخفاء الآيات تدريجياً</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Sessions + Hafiz Tip -->
+    <div class="grid lg:grid-cols-3 gap-4">
+      
+      <!-- Recent Sessions -->
+      <div class="lg:col-span-2 card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold" style="color:var(--text)">جلساتك الأخيرة</h3>
+          <button onclick="showView('progress')" class="text-sm text-emerald-600 hover:underline">عرض الكل</button>
+        </div>
+        <div class="space-y-3">
+          <div class="flex items-center gap-3 p-3 rounded-xl" style="background:var(--slate-bg)">
+            <div class="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+              <i data-lucide="check-circle" style="width:18px;height:18px;color:#059669;"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-semibold text-sm truncate" style="color:var(--text)">سورة البقرة — الآيات ٢٥٥-٢٦٢</p>
+              <p class="text-xs" style="color:var(--text-muted)">منذ ساعتين • ١٥ دقيقة</p>
+            </div>
+            <div class="text-emerald-600 font-bold text-sm">٩٢٪</div>
+          </div>
+          <div class="flex items-center gap-3 p-3 rounded-xl" style="background:var(--slate-bg)">
+            <div class="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+              <i data-lucide="alert-circle" style="width:18px;height:18px;color:#d97706;"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-semibold text-sm truncate" style="color:var(--text)">سورة آل عمران — الآيات ١-٢٠</p>
+              <p class="text-xs" style="color:var(--text-muted)">أمس • ٢٢ دقيقة</p>
+            </div>
+            <div class="text-amber-600 font-bold text-sm">٧٨٪</div>
+          </div>
+          <div class="flex items-center gap-3 p-3 rounded-xl" style="background:var(--slate-bg)">
+            <div class="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+              <i data-lucide="check-circle" style="width:18px;height:18px;color:#059669;"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-semibold text-sm truncate" style="color:var(--text)">سورة الفاتحة</p>
+              <p class="text-xs" style="color:var(--text-muted)">منذ ٣ أيام • ٥ دقائق</p>
+            </div>
+            <div class="text-emerald-600 font-bold text-sm">٩٨٪</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hafiz Tip + Achievement -->
+      <div class="space-y-3">
+        <div class="bg-gradient-to-br from-violet-500 to-purple-700 rounded-xl p-5 text-white">
+          <div class="flex items-center gap-2 mb-3">
+            <i data-lucide="lightbulb" style="width:16px;height:16px;"></i>
+            <span class="font-semibold text-sm">نصيحة حافظ</span>
+          </div>
+          <p class="text-sm text-white/90 leading-relaxed mb-3">عند نطق حرف الضاد، ضع طرف لسانك بين الأسنان مع ضغط الهواء. المدّ في كلمة "الحيّ" يجب أن يكون ٦ حركات.</p>
+          <button onclick="openChat()" class="w-full py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors">اسأل حافظ</button>
+        </div>
+        <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-5 text-white">
+          <div class="flex items-center gap-3 mb-2">
+            <span class="text-3xl">🏆</span>
+            <div>
+              <p class="font-bold text-sm">إنجاز جديد!</p>
+              <p class="text-xs text-white/80">نجم التجويد</p>
+            </div>
+          </div>
+          <p class="text-xs text-white/90">أكملت ٥ أيام متتالية بدقة أعلى من ٩٠٪</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly Chart -->
+    <div class="card p-5">
+      <h3 class="font-bold mb-4" style="color:var(--text)">نشاط الأسبوع</h3>
+      <div class="flex items-end gap-2 h-28">
+        <div class="flex-1 flex flex-col items-center gap-1">
+          <div class="w-full rounded-t-md bg-emerald-500" style="height:40%"></div>
+          <span class="text-xs" style="color:var(--text-muted)">س</span>
+        </div>
+        <div class="flex-1 flex flex-col items-center gap-1">
+          <div class="w-full rounded-t-md bg-emerald-500" style="height:65%"></div>
+          <span class="text-xs" style="color:var(--text-muted)">ح</span>
+        </div>
+        <div class="flex-1 flex flex-col items-center gap-1">
+          <div class="w-full rounded-t-md bg-emerald-500" style="height:80%"></div>
+          <span class="text-xs" style="color:var(--text-muted)">ن</span>
+        </div>
+        <div class="flex-1 flex flex-col items-center gap-1">
+          <div class="w-full rounded-t-md bg-emerald-600" style="height:100%"></div>
+          <span class="text-xs font-bold text-emerald-600">خ</span>
+        </div>
+        <div class="flex-1 flex flex-col items-center gap-1">
+          <div class="w-full rounded-t-md" style="height:100%;background:var(--border)"></div>
+          <span class="text-xs" style="color:var(--text-muted)">ج</span>
+        </div>
+        <div class="flex-1 flex flex-col items-center gap-1">
+          <div class="w-full rounded-t-md" style="height:100%;background:var(--border)"></div>
+          <span class="text-xs" style="color:var(--text-muted)">س</span>
+        </div>
+        <div class="flex-1 flex flex-col items-center gap-1">
+          <div class="w-full rounded-t-md" style="height:100%;background:var(--border)"></div>
+          <span class="text-xs" style="color:var(--text-muted)">أ</span>
+        </div>
+      </div>
+      <p class="text-xs mt-3 text-center" style="color:var(--text-muted)">٤٥ دقيقة من هدف ٦٠ دقيقة هذا الأسبوع</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────── -->
+<!-- VIEW 2: MUSHAF + RECITATION (COMBINED) -->
+<!-- ─────────────────────────────────────────────────── -->
+<div id="view-mushaf" class="view">
+  <div class="flex h-[calc(100vh-56px)]">
+
+    <!-- LEFT PANEL (desktop) -->
+    <aside class="hidden lg:flex flex-col w-72 border-l border-[var(--border)] overflow-hidden" style="background:var(--card)">
+      
+      <!-- Surah Search -->
+      <div class="p-4 border-b border-[var(--border)]">
+        <div class="relative">
+          <i data-lucide="search" style="width:14px;height:14px;position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);"></i>
+          <input type="text" placeholder="ابحث في السور..." oninput="filterSurahs(this.value)"
+            class="w-full pr-8 pl-3 py-2 rounded-lg text-sm border border-[var(--border)] focus:outline-none"
+            style="background:var(--slate-bg);color:var(--text);">
+        </div>
+      </div>
+
+      <!-- Surah List -->
+      <div id="surah-list" class="flex-1 overflow-y-auto p-2">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- Page Jump -->
+      <div class="p-4 border-t border-[var(--border)]">
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-semibold" style="color:var(--text-muted)">انتقل للصفحة</label>
+          <input type="number" id="page-jump" min="1" max="604" value="1" onchange="goToPage(this.value)"
+            class="flex-1 p-2 rounded-lg text-sm border border-[var(--border)] text-center font-bold focus:outline-none"
+            style="background:var(--slate-bg);color:var(--text);">
+          <span class="text-xs" style="color:var(--text-muted)">/٦٠٤</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CENTER: MUSHAF PAGE -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+
+      <!-- Mushaf Toolbar -->
+      <div class="flex items-center justify-between px-4 py-2 border-b border-[var(--border)]" style="background:var(--card)">
+        <div class="flex items-center gap-2">
+          <!-- Mobile sidebar toggle -->
+          <button onclick="toggleMobileSurahList()" class="lg:hidden p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+            <i data-lucide="menu" style="width:16px;height:16px;color:var(--text-muted);"></i>
+          </button>
+          <!-- Page nav -->
+          <button onclick="prevPage()" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+            <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--text-muted);"></i>
+          </button>
+          <span class="text-sm font-bold px-3 py-1 rounded-lg border border-[var(--border)]" style="color:var(--text);background:var(--slate-bg);">
+            صفحة <span id="current-page-num">١</span>
+          </span>
+          <button onclick="nextPage()" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+            <i data-lucide="chevron-left" style="width:16px;height:16px;color:var(--text-muted);"></i>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <!-- Tajweed toggle -->
+          <button onclick="toggleTajweedColors()" id="tajweed-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> التجويد
+          </button>
+          <!-- Font size -->
+          <button onclick="changeFontSize(-2)" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+            <i data-lucide="minus" style="width:14px;height:14px;color:var(--text-muted);"></i>
+          </button>
+          <span class="text-xs font-bold" style="color:var(--text-muted)" id="font-display">٢٤</span>
+          <button onclick="changeFontSize(2)" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+            <i data-lucide="plus" style="width:14px;height:14px;color:var(--text-muted);"></i>
+          </button>
+          <!-- Bookmark -->
+          <button onclick="addBookmark()" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+            <i data-lucide="bookmark" style="width:15px;height:15px;color:var(--text-muted);"></i>
+          </button>
+          <!-- Chat -->
+          <button onclick="openChat()" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+            <i data-lucide="message-circle" style="width:15px;height:15px;color:var(--text-muted);"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Surah Banner -->
+      <div id="surah-banner" class="surah-banner px-6 py-3 text-white flex items-center justify-between relative z-10">
+        <div>
+          <span class="font-bold text-base" id="banner-surah-name">الفاتحة</span>
+          <span class="text-xs text-white/70 mr-2" id="banner-surah-info">مكية • ٧ آيات</span>
+        </div>
+        <div class="text-xs text-white/70 flex items-center gap-3">
+          <span>الجزء <span id="banner-juz">١</span></span>
+          <span>الحزب <span id="banner-hizb">١</span></span>
+        </div>
+      </div>
+
+      <!-- Mushaf Content -->
+      <div class="flex-1 overflow-y-auto p-4 lg:p-6" style="background:var(--slate-bg)">
+        <div class="max-w-2xl mx-auto">
+          
+          <!-- Basmalah -->
+          <div id="basmalah" class="text-center mb-4 font-mushaf text-2xl" style="color:var(--text)">
+            بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ
+          </div>
+
+          <!-- Verses -->
+          <div class="mushaf-page">
+            <div id="verses-container" class="font-mushaf leading-loose text-center" style="font-size:24px;color:var(--text);">
+              <!-- Populated by JS -->
+            </div>
+            <!-- Page Footer -->
+            <div class="flex items-center justify-between mt-4 pt-3 border-t border-[var(--mushaf-border)] text-xs" style="color:var(--text-muted);opacity:.6;">
+              <span id="footer-juz">الجزء ١</span>
+              <span id="footer-page">١</span>
+              <span id="footer-hizb">الحزب ١</span>
+            </div>
+          </div>
+
+          <!-- Tajweed Legend -->
+          <div id="tajweed-legend" class="mt-4 card p-4">
+            <h4 class="text-xs font-bold mb-3" style="color:var(--text-muted)">دليل ألوان التجويد</h4>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div class="flex items-center gap-2"><span class="legend-dot bg-red-700"></span><span style="color:var(--text)">مد واجب متصل</span></div>
+              <div class="flex items-center gap-2"><span class="legend-dot bg-orange-600"></span><span style="color:var(--text)">مد جائز منفصل</span></div>
+              <div class="flex items-center gap-2"><span class="legend-dot bg-amber-600"></span><span style="color:var(--text)">مد طبيعي</span></div>
+              <div class="flex items-center gap-2"><span class="legend-dot bg-green-700"></span><span style="color:var(--text)">غنة / إخفاء</span></div>
+              <div class="flex items-center gap-2"><span class="legend-dot bg-blue-600"></span><span style="color:var(--text)">قلقلة</span></div>
+              <div class="flex items-center gap-2"><span class="legend-dot bg-purple-700"></span><span style="color:var(--text)">تفخيم</span></div>
+              <div class="flex items-center gap-2"><span class="legend-dot bg-gray-500"></span><span style="color:var(--text)">لا يُنطق</span></div>
+              <div class="flex items-center gap-2"><span class="legend-dot bg-cyan-600"></span><span style="color:var(--text)">إدغام</span></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: Audio & Recitation (desktop) -->
+    <aside class="hidden xl:flex flex-col w-72 border-r border-[var(--border)] overflow-y-auto" style="background:var(--card)">
+      
+      <!-- Reciter -->
+      <div class="p-4 border-b border-[var(--border)]">
+        <h3 class="font-semibold text-sm mb-2 flex items-center gap-2" style="color:var(--text)">
+          <i data-lucide="headphones" style="width:14px;height:14px;"></i> القارئ المرجعي
+        </h3>
+        <select id="reciter-select" class="w-full p-2 rounded-lg text-sm border border-[var(--border)] focus:outline-none" style="background:var(--slate-bg);color:var(--text);">
+          <option value="husary">الحصري</option>
+          <option value="afasy">مشاري العفاسي</option>
+          <option value="abdulbasit">عبد الباسط عبد الصمد</option>
+          <option value="minshawi">المنشاوي</option>
+          <option value="maher">ماهر المعيقلي</option>
+        </select>
+      </div>
+
+      <!-- Audio Player -->
+      <div class="p-4 border-b border-[var(--border)]">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-semibold" style="color:var(--text-muted)">يُشغَّل الآن</span>
+          <span class="text-xs" style="color:var(--text-muted)">00:00 / 00:45</span>
+        </div>
+        <div class="rounded-lg p-3 mb-3 flex justify-center gap-1" style="background:var(--slate-bg);">
+          <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        </div>
+        <div class="flex items-center justify-center gap-4 mb-3">
+          <button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"><i data-lucide="skip-back" style="width:16px;height:16px;color:var(--text-muted);"></i></button>
+          <button onclick="togglePlay()" id="play-btn" class="w-11 h-11 bg-emerald-600 hover:bg-emerald-700 rounded-full flex items-center justify-center text-white shadow-sm shadow-emerald-300 dark:shadow-none transition-colors">
+            <i data-lucide="play" style="width:16px;height:16px;margin-right:-1px;"></i>
+          </button>
+          <button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"><i data-lucide="skip-forward" style="width:16px;height:16px;color:var(--text-muted);"></i></button>
+        </div>
+        <div class="flex items-center gap-2">
+          <i data-lucide="volume-2" style="width:13px;height:13px;color:var(--text-muted);"></i>
+          <input type="range" class="flex-1" value="80">
+        </div>
+      </div>
+
+      <!-- Recitation Mode -->
+      <div class="p-4 border-b border-[var(--border)]">
+        <h3 class="font-semibold text-sm mb-3 flex items-center gap-2" style="color:var(--text)">
+          <i data-lucide="mic" style="width:14px;height:14px;"></i> وضع التصحيح
+        </h3>
+        <div class="space-y-2 mb-3">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="radio" name="correction-mode" value="both" checked class="accent-emerald-600">
+            <span class="text-sm" style="color:var(--text)">تلاوة + تجويد</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="radio" name="correction-mode" value="recitation" class="accent-emerald-600">
+            <span class="text-sm" style="color:var(--text)">تلاوة فقط</span>
+          </label>
+        </div>
+        <button onclick="toggleRecording()" id="record-btn" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2">
+          <i data-lucide="circle" style="width:13px;height:13px;fill:white;"></i>
+          ابدأ التسجيل
+        </button>
+        <!-- Early Access Banner -->
+        <div id="early-access-banner" class="mt-4 p-4 rounded-xl text-center"
+          style="background:linear-gradient(135deg,#064e3b,#065f46);color:white;">
+          <p class="text-sm font-bold mb-1">🚀 الوصول المبكر</p>
+          <p class="text-xs text-white/80 mb-3">
+            ميزة التصحيح الصوتي قيد الاختبار — سجّل بريدك لتكون من أوائل المستخدمين
+          </p>
+          <div class="flex gap-2">
+            <input
+              type="email"
+              id="early-email"
+              placeholder="بريدك الإلكتروني"
+              class="flex-1 px-3 py-2 rounded-lg text-sm text-slate-800 focus:outline-none"
+              style="direction:ltr;"
+            >
+            <button
+              onclick="submitEarlyAccess()"
+              class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-bold transition-colors"
+            >
+              سجّل
+            </button>
+          </div>
+          <div id="early-success" class="hidden mt-2 text-xs text-emerald-300">
+            ✅ تم التسجيل! سنتواصل معك قريباً
+          </div>
+        </div>
+
+        <div id="rec-status" class="hidden mt-3 text-center">
+          <div class="text-2xl font-bold text-emerald-600" id="rec-timer">٠:٠٠</div>
+          <div class="text-xs text-emerald-500">جاري التسجيل...</div>
+          <div class="flex justify-center gap-1 mt-2">
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page Info -->
+      <div class="p-4">
+        <h3 class="font-semibold text-xs mb-3" style="color:var(--text-muted)">معلومات الصفحة</h3>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between"><span style="color:var(--text-muted)">الجزء</span><span class="font-semibold" id="info-juz" style="color:var(--text)">١</span></div>
+          <div class="flex justify-between"><span style="color:var(--text-muted)">الحزب</span><span class="font-semibold" id="info-hizb" style="color:var(--text)">١</span></div>
+          <div class="flex justify-between"><span style="color:var(--text-muted)">الربع</span><span class="font-semibold" style="color:var(--text)">١</span></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────── -->
+<!-- VIEW 3: RECITATION (Dedicated) -->
+<!-- ─────────────────────────────────────────────────── -->
+<div id="view-recitation" class="view">
+  <div class="max-w-3xl mx-auto px-4 py-6 space-y-5">
+    <div class="flex items-center justify-between">
+      <h1 class="text-xl font-bold" style="color:var(--text)">تصحيح التلاوة</h1>
+      <div class="flex items-center gap-2">
+        <span class="text-xs px-3 py-1 rounded-full border border-[var(--border)] font-semibold" style="color:var(--text-muted)">سورة الفاتحة</span>
+        <button onclick="showView('mushaf')" class="text-xs text-emerald-600 hover:underline">تغيير السورة</button>
+      </div>
+    </div>
+
+    <!-- Mode Selector -->
+    <div class="card p-4">
+      <h3 class="text-sm font-bold mb-3" style="color:var(--text)">وضع التصحيح</h3>
+      <div class="grid grid-cols-2 gap-2">
+        <label class="cursor-pointer">
+          <input type="radio" name="rec-mode" value="both" checked class="sr-only peer">
+          <div class="p-3 rounded-xl border-2 border-transparent peer-checked:border-emerald-500 peer-checked:bg-emerald-50 dark:peer-checked:bg-emerald-900/20 transition-all text-center" style="background:var(--slate-bg);">
+            <div class="text-xl mb-1">🎯</div>
+            <p class="text-sm font-semibold" style="color:var(--text)">تلاوة + تجويد</p>
+            <p class="text-xs" style="color:var(--text-muted)">كشف كامل للأخطاء</p>
+          </div>
+        </label>
+        <label class="cursor-pointer">
+          <input type="radio" name="rec-mode" value="recitation" class="sr-only peer">
+          <div class="p-3 rounded-xl border-2 border-transparent peer-checked:border-blue-500 peer-checked:bg-blue-50 dark:peer-checked:bg-blue-900/20 transition-all text-center" style="background:var(--slate-bg);">
+            <div class="text-xl mb-1">🎙️</div>
+            <p class="text-sm font-semibold" style="color:var(--text)">تلاوة فقط</p>
+            <p class="text-xs" style="color:var(--text-muted)">الكلمات الصحيحة والخاطئة</p>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Reciter Selector -->
+    <div class="card p-4">
+      <h3 class="text-sm font-bold mb-3" style="color:var(--text)">القارئ المرجعي</h3>
+      <div class="grid grid-cols-3 gap-2">
+        <button onclick="selectReciter('husary',this)" class="reciter-btn active p-2 rounded-lg border-2 text-xs font-semibold transition-all border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700">الحصري</button>
+        <button onclick="selectReciter('afasy',this)" class="reciter-btn p-2 rounded-lg border-2 text-xs font-semibold transition-all border-[var(--border)]" style="color:var(--text);">العفاسي</button>
+        <button onclick="selectReciter('abdulbasit',this)" class="reciter-btn p-2 rounded-lg border-2 text-xs font-semibold transition-all border-[var(--border)]" style="color:var(--text);">عبد الباسط</button>
+        <button onclick="selectReciter('minshawi',this)" class="reciter-btn p-2 rounded-lg border-2 text-xs font-semibold transition-all border-[var(--border)]" style="color:var(--text);">المنشاوي</button>
+        <button onclick="selectReciter('maher',this)" class="reciter-btn p-2 rounded-lg border-2 text-xs font-semibold transition-all border-[var(--border)]" style="color:var(--text);">المعيقلي</button>
+      </div>
+    </div>
+
+    <!-- Verses Display (for recitation tracking) -->
+    <div class="card p-5">
+      <div class="font-mushaf text-center leading-loose" style="font-size:22px;color:var(--text);" id="recitation-verses">
+        <span class="verse-word active">ٱلۡحَمۡدُ</span> 
+        <span class="verse-word">لِلَّهِ</span> 
+        <span class="verse-word">رَبِّ</span> 
+        <span class="verse-word">ٱلۡعَٰلَمِينَ</span>
+        <span class="verse-number">﴿١﴾</span>
+        <span class="verse-word">ٱلرَّحۡمَٰنِ</span>
+        <span class="verse-word">ٱلرَّحِيمِ</span>
+        <span class="verse-number">﴿٢﴾</span>
+      </div>
+    </div>
+
+    <!-- Big Record Button -->
+    <div class="flex flex-col items-center gap-4">
+      <button onclick="toggleRecording()" id="rec-btn-main" class="w-24 h-24 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex flex-col items-center justify-center gap-1 shadow-lg shadow-emerald-200 dark:shadow-none transition-all">
+        <i data-lucide="mic" style="width:32px;height:32px;"></i>
+        <span class="text-xs font-semibold">ابدأ</span>
+      </button>
+      <p class="text-xs text-center" style="color:var(--text-muted)">اضغط للتسجيل وسيبدأ حافظ في تحليل تلاوتك فوراً</p>
+    </div>
+
+    <!-- Results area (shown after recording) -->
+    <div id="recitation-results" class="hidden card p-5">
+      <h3 class="font-bold mb-4 text-emerald-600">نتائج التحليل</h3>
+      <div class="space-y-3">
+        <div class="flex items-center gap-3 p-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+          <span class="text-xl">✅</span>
+          <div>
+            <p class="text-sm font-semibold text-green-800 dark:text-green-200">ٱلۡحَمۡدُ لِلَّهِ رَبِّ ٱلۡعَٰلَمِينَ</p>
+            <p class="text-xs text-green-600">صحيح — نطق ممتاز</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+          <span class="text-xl">⚠️</span>
+          <div>
+            <p class="text-sm font-semibold text-amber-800 dark:text-amber-200">ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ</p>
+            <p class="text-xs text-amber-600">المد في "الرحمن" يحتاج ٢ حركات — تأكد من المدة</p>
+          </div>
+        </div>
+      </div>
+      <button onclick="showSessionReport()" class="w-full mt-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors">
+        عرض تقرير الجلسة الكامل
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────── -->
+<!-- VIEW 4: PROGRESS -->
+<!-- ─────────────────────────────────────────────────── -->
+<div id="view-progress" class="view">
+  <div class="max-w-4xl mx-auto px-4 py-6 space-y-5">
+
+    <h1 class="text-xl font-bold" style="color:var(--text)">سجل التقدم</h1>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-3 gap-3">
+      <div class="card p-4 text-center">
+        <div class="text-3xl font-bold text-emerald-600 mb-1">٣</div>
+        <div class="text-xs font-semibold" style="color:var(--text-muted)">ختمات مكتملة</div>
+      </div>
+      <div class="card p-4 text-center">
+        <div class="text-3xl font-bold text-blue-600 mb-1">٨٥٪</div>
+        <div class="text-xs font-semibold" style="color:var(--text-muted)">متوسط الإتقان</div>
+      </div>
+      <div class="card p-4 text-center">
+        <div class="text-3xl font-bold text-violet-600 mb-1">٤٢</div>
+        <div class="text-xs font-semibold" style="color:var(--text-muted)">ساعة تلاوة</div>
+      </div>
+    </div>
+
+    <!-- Common Errors -->
+    <div class="card p-5">
+      <h3 class="font-bold mb-4" style="color:var(--text)">أبرز مواضع التحسين</h3>
+      <div class="space-y-3">
+        <div>
+          <div class="flex justify-between text-sm mb-1">
+            <span style="color:var(--text)">المدود (الإطالة)</span>
+            <span style="color:var(--text-muted)">٣٢ خطأ</span>
+          </div>
+          <div class="stat-bar"><div class="stat-fill bg-red-500" style="width:80%"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between text-sm mb-1">
+            <span style="color:var(--text)">الغنة والإخفاء</span>
+            <span style="color:var(--text-muted)">١٨ خطأ</span>
+          </div>
+          <div class="stat-bar"><div class="stat-fill bg-amber-500" style="width:55%"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between text-sm mb-1">
+            <span style="color:var(--text)">مخارج الحروف</span>
+            <span style="color:var(--text-muted)">١٢ خطأ</span>
+          </div>
+          <div class="stat-bar"><div class="stat-fill bg-blue-500" style="width:35%"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between text-sm mb-1">
+            <span style="color:var(--text)">الوقف والابتداء</span>
+            <span style="color:var(--text-muted)">٨ أخطاء</span>
+          </div>
+          <div class="stat-bar"><div class="stat-fill bg-violet-500" style="width:22%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sessions History -->
+    <div class="card p-5">
+      <h3 class="font-bold mb-4" style="color:var(--text)">سجل الجلسات</h3>
+      <div class="space-y-3">
+        <div class="p-3 rounded-xl border border-[var(--border)]">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-semibold text-sm" style="color:var(--text)">سورة البقرة — ٢٥٥-٢٦٢</span>
+            <span class="text-emerald-600 font-bold text-sm">٩٢٪</span>
+          </div>
+          <div class="flex items-center gap-3 text-xs" style="color:var(--text-muted)">
+            <span>اليوم — ١٥ دقيقة</span>
+            <span>|</span>
+            <span>تلاوة + تجويد</span>
+            <span>|</span>
+            <span>الحصري</span>
+          </div>
+        </div>
+        <div class="p-3 rounded-xl border border-[var(--border)]">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-semibold text-sm" style="color:var(--text)">سورة آل عمران — ١-٢٠</span>
+            <span class="text-amber-600 font-bold text-sm">٧٨٪</span>
+          </div>
+          <div class="flex items-center gap-3 text-xs" style="color:var(--text-muted)">
+            <span>أمس — ٢٢ دقيقة</span>
+            <span>|</span>
+            <span>تلاوة فقط</span>
+          </div>
+        </div>
+        <div class="p-3 rounded-xl border border-[var(--border)]">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-semibold text-sm" style="color:var(--text)">سورة الفاتحة</span>
+            <span class="text-emerald-600 font-bold text-sm">٩٨٪</span>
+          </div>
+          <div class="flex items-center gap-3 text-xs" style="color:var(--text-muted)">
+            <span>منذ ٣ أيام — ٥ دقائق</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hatmaat -->
+    <div class="card p-5">
+      <h3 class="font-bold mb-4" style="color:var(--text)">الختمات</h3>
+      <div class="grid grid-cols-3 gap-3">
+        <div class="p-3 rounded-xl text-center bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+          <div class="text-2xl mb-1">📿</div>
+          <p class="text-xs font-bold text-emerald-700 dark:text-emerald-400">الختمة الأولى</p>
+          <p class="text-xs" style="color:var(--text-muted)">يناير ٢٠٢٦</p>
+        </div>
+        <div class="p-3 rounded-xl text-center bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+          <div class="text-2xl mb-1">📿</div>
+          <p class="text-xs font-bold text-emerald-700 dark:text-emerald-400">الختمة الثانية</p>
+          <p class="text-xs" style="color:var(--text-muted)">فبراير ٢٠٢٦</p>
+        </div>
+        <div class="p-3 rounded-xl text-center bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+          <div class="text-2xl mb-1">📿</div>
+          <p class="text-xs font-bold text-emerald-700 dark:text-emerald-400">الختمة الثالثة</p>
+          <p class="text-xs" style="color:var(--text-muted)">أبريل ٢٠٢٦</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- end main content -->
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- BOTTOM NAV (Mobile) -->
+<!-- ═══════════════════════════════════════════════════ -->
+<nav class="lg:hidden fixed bottom-0 left-0 right-0 glass border-t border-[var(--border)] z-40">
+  <div class="flex items-center justify-around py-2">
+    <button onclick="showView('dashboard')" class="btab flex flex-col items-center gap-0.5 p-2 text-slate-400 active" data-view="dashboard">
+      <i data-lucide="layout-dashboard" style="width:20px;height:20px;"></i>
+      <span class="text-xs">الرئيسية</span>
+    </button>
+    <button onclick="showView('mushaf')" class="btab flex flex-col items-center gap-0.5 p-2 text-slate-400" data-view="mushaf">
+      <i data-lucide="book-open" style="width:20px;height:20px;"></i>
+      <span class="text-xs">المصحف</span>
+    </button>
+    <button onclick="showView('recitation')" class="btab flex flex-col items-center gap-0.5 p-2 text-slate-400" data-view="recitation">
+      <div class="w-12 h-12 bg-emerald-600 rounded-full flex items-center justify-center -mt-5 shadow-lg shadow-emerald-300 dark:shadow-none">
+        <i data-lucide="mic" style="width:22px;height:22px;color:white;"></i>
+      </div>
+    </button>
+    <button onclick="openChat()" class="btab flex flex-col items-center gap-0.5 p-2 text-slate-400" data-view="chat">
+      <i data-lucide="message-circle" style="width:20px;height:20px;"></i>
+      <span class="text-xs">حافظ</span>
+    </button>
+    <button onclick="showView('progress')" class="btab flex flex-col items-center gap-0.5 p-2 text-slate-400" data-view="progress">
+      <i data-lucide="bar-chart-2" style="width:20px;height:20px;"></i>
+      <span class="text-xs">التقدم</span>
+    </button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- CHAT PANEL (Slide-in) -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div id="chat-panel" class="fixed top-14 left-0 bottom-0 w-full sm:w-96 glass border-l border-[var(--border)] z-45 flex flex-col" style="z-index:45;">
+  <div class="flex items-center justify-between p-4 border-b border-[var(--border)]">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 bg-gradient-to-br from-violet-500 to-purple-700 rounded-xl flex items-center justify-center shadow-sm">
+        <i data-lucide="bot" style="width:16px;height:16px;color:white;"></i>
+      </div>
+      <div>
+        <h3 class="font-bold text-sm" style="color:var(--text)">حافظ الذكي</h3>
+        <p class="text-xs text-emerald-500">متصل • مساعدك التجويدي</p>
+      </div>
+    </div>
+    <button onclick="closeChat()" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+      <i data-lucide="x" style="width:16px;height:16px;color:var(--text-muted);"></i>
+    </button>
+  </div>
+
+  <!-- Quick Questions -->
+  <div class="p-3 border-b border-[var(--border)]">
+    <p class="text-xs font-semibold mb-2" style="color:var(--text-muted)">أسئلة شائعة</p>
+    <div class="flex flex-wrap gap-1.5">
+      <button onclick="askChatQuestion('ما هو المد الواجب المتصل؟')" class="text-xs px-2.5 py-1 rounded-full border border-[var(--border)] hover:border-violet-400 transition-colors" style="color:var(--text);">المد الواجب</button>
+      <button onclick="askChatQuestion('ما هي حروف القلقلة؟')" class="text-xs px-2.5 py-1 rounded-full border border-[var(--border)] hover:border-violet-400 transition-colors" style="color:var(--text);">القلقلة</button>
+      <button onclick="askChatQuestion('كيف أؤدي الغنة صحيحاً؟')" class="text-xs px-2.5 py-1 rounded-full border border-[var(--border)] hover:border-violet-400 transition-colors" style="color:var(--text);">الغنة</button>
+      <button onclick="askChatQuestion('ما الفرق بين الإخفاء والإدغام؟')" class="text-xs px-2.5 py-1 rounded-full border border-[var(--border)] hover:border-violet-400 transition-colors" style="color:var(--text);">الإخفاء</button>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3">
+    <div class="flex gap-3">
+      <div class="w-7 h-7 bg-gradient-to-br from-violet-500 to-purple-700 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+        <i data-lucide="bot" style="width:13px;height:13px;color:white;"></i>
+      </div>
+      <div class="chat-hafiz p-3 max-w-[85%]">
+        <p class="text-sm leading-relaxed" style="color:var(--text);">السلام عليكم ورحمة الله، أنا حافظ مساعدك في علم التجويد. يمكنك سؤالي عن أي حكم تجويدي وسأشرحه لك بدقة.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="p-3 border-t border-[var(--border)]">
+    <div class="flex items-end gap-2">
+      <textarea id="chat-input" rows="1" placeholder="اسأل عن أي حكم تجويدي..." onkeydown="chatKeyDown(event)"
+        class="flex-1 p-3 rounded-xl border border-[var(--border)] text-sm resize-none focus:outline-none focus:border-violet-400"
+        style="background:var(--slate-bg);color:var(--text);max-height:100px;"
+      ></textarea>
+      <button onclick="sendChatMessage()" id="send-btn" class="w-10 h-10 bg-violet-600 hover:bg-violet-700 text-white rounded-xl flex items-center justify-center flex-shrink-0 transition-colors">
+        <i data-lucide="send" style="width:15px;height:15px;"></i>
+      </button>
+    </div>
+  </div>
+</div>
+<div id="chat-overlay" class="hidden fixed inset-0 bg-black/30 z-40" onclick="closeChat()"></div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- VERSE MODAL -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div id="verse-modal" class="fixed inset-0 bg-black/40 z-60 items-end sm:items-center justify-center" style="z-index:60;">
+  <div class="card w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl p-6 animate__fadeIn" style="animation:slideUp .3s ease;">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold" style="color:var(--text)">خيارات الآية <span id="modal-verse-num">١</span></h3>
+      <button onclick="closeVerseModal()" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+        <i data-lucide="x" style="width:16px;height:16px;color:var(--text-muted);"></i>
+      </button>
+    </div>
+    <!-- Verse Text -->
+    <div class="p-4 rounded-xl mb-4 text-center font-mushaf text-xl leading-loose" style="background:var(--slate-bg);color:var(--text);" id="modal-verse-text">
+      ٱلۡحَمۡدُ لِلَّهِ رَبِّ ٱلۡعَٰلَمِينَ
+    </div>
+    <!-- Reciters -->
+    <div class="mb-4">
+      <p class="text-xs font-semibold mb-2" style="color:var(--text-muted)">استمع بصوت القارئ</p>
+      <div class="grid grid-cols-3 gap-2">
+        <button onclick="playVerseAudio('husary')" class="p-2 rounded-lg border border-[var(--border)] text-xs hover:border-emerald-500 hover:text-emerald-600 transition-colors" style="color:var(--text);">الحصري</button>
+        <button onclick="playVerseAudio('afasy')" class="p-2 rounded-lg border border-[var(--border)] text-xs hover:border-emerald-500 hover:text-emerald-600 transition-colors" style="color:var(--text);">العفاسي</button>
+        <button onclick="playVerseAudio('abdulbasit')" class="p-2 rounded-lg border border-[var(--border)] text-xs hover:border-emerald-500 hover:text-emerald-600 transition-colors" style="color:var(--text);">عبد الباسط</button>
+        <button onclick="playVerseAudio('minshawi')" class="p-2 rounded-lg border border-[var(--border)] text-xs hover:border-emerald-500 hover:text-emerald-600 transition-colors" style="color:var(--text);">المنشاوي</button>
+        <button onclick="playVerseAudio('maher')" class="p-2 rounded-lg border border-[var(--border)] text-xs hover:border-emerald-500 hover:text-emerald-600 transition-colors" style="color:var(--text);">المعيقلي</button>
+      </div>
+    </div>
+    <!-- Translation + Tafsir -->
+    <div class="grid grid-cols-2 gap-2 mb-2">
+      <button onclick="showTranslation()" class="p-3 rounded-xl border border-[var(--border)] text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" style="color:var(--text);">
+        <i data-lucide="languages" style="width:14px;height:14px;display:inline;margin-left:4px;"></i>الترجمة
+      </button>
+      <button onclick="showTafsir()" class="p-3 rounded-xl border border-[var(--border)] text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" style="color:var(--text);">
+        <i data-lucide="book" style="width:14px;height:14px;display:inline;margin-left:4px;"></i>التفسير
+      </button>
+    </div>
+    <!-- Translation / Tafsir area -->
+    <div id="modal-extra" class="hidden p-3 rounded-xl text-sm leading-relaxed" style="background:var(--slate-bg);color:var(--text);">
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SESSION REPORT MODAL -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div id="report-modal" class="fixed inset-0 bg-black/50 z-70 items-center justify-center p-4" style="z-index:70;">
+  <div class="card w-full max-w-lg rounded-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-emerald-600 to-teal-700 p-6 text-white">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-xl font-bold">تقرير الجلسة</h2>
+        <button onclick="closeReport()" class="p-1.5 bg-white/20 rounded-lg hover:bg-white/30">
+          <i data-lucide="x" style="width:16px;height:16px;"></i>
+        </button>
+      </div>
+      <p class="text-white/80 text-sm">سورة الفاتحة • ٧ آيات • ٥ دقائق</p>
+      <div class="mt-4 flex items-center gap-4">
+        <div class="ring-wrap w-20 h-20">
+          <svg viewBox="0 0 80 80" class="w-20 h-20 progress-ring">
+            <circle cx="40" cy="40" r="32" fill="none" stroke-width="6" class="ring-bg"/>
+            <circle cx="40" cy="40" r="32" fill="none" stroke-width="6" class="ring-fill" stroke-dasharray="201" stroke-dashoffset="30"/>
+          </svg>
+          <span class="absolute text-white font-bold text-lg">٨٥٪</span>
+        </div>
+        <div>
+          <p class="text-3xl font-bold">ممتاز</p>
+          <p class="text-white/80 text-sm">مستوى الإتقان</p>
+        </div>
+      </div>
+    </div>
+    <!-- Body -->
+    <div class="p-5 space-y-4">
+      <!-- Stats -->
+      <div class="grid grid-cols-3 gap-3 text-center">
+        <div class="p-3 rounded-xl" style="background:var(--slate-bg);">
+          <div class="text-xl font-bold text-emerald-600">٦</div>
+          <div class="text-xs" style="color:var(--text-muted);">آيات صحيحة</div>
+        </div>
+        <div class="p-3 rounded-xl" style="background:var(--slate-bg);">
+          <div class="text-xl font-bold text-amber-500">١</div>
+          <div class="text-xs" style="color:var(--text-muted);">تحتاج مراجعة</div>
+        </div>
+        <div class="p-3 rounded-xl" style="background:var(--slate-bg);">
+          <div class="text-xl font-bold text-blue-500">٣</div>
+          <div class="text-xs" style="color:var(--text-muted);">ملاحظات تجويد</div>
+        </div>
+      </div>
+
+      <!-- Main Issues -->
+      <div>
+        <h4 class="font-bold text-sm mb-3" style="color:var(--text)">مواضع التحسين</h4>
+        <div class="space-y-2">
+          <div class="flex items-start gap-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20">
+            <span class="text-lg">⚠️</span>
+            <div>
+              <p class="text-sm font-semibold text-amber-800 dark:text-amber-200">مد "الرحمن"</p>
+              <p class="text-xs text-amber-600">يجب أن يكون ٢ حركات — شاهدت تقصيراً في المدة</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20">
+            <span class="text-lg">💡</span>
+            <div>
+              <p class="text-sm font-semibold text-blue-800 dark:text-blue-200">القلقلة في "الصراط"</p>
+              <p class="text-xs text-blue-600">حرف الصاد يحتاج ارتجاجاً خفيفاً عند الوقف</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Next Session Suggestion -->
+      <div class="p-4 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20">
+        <h4 class="font-bold text-sm text-emerald-800 dark:text-emerald-200 mb-2">اقتراح الجلسة القادمة</h4>
+        <p class="text-xs text-emerald-700 dark:text-emerald-300">ركز على سورة البقرة الآيات ١-٥ مع التركيز على المدود الطبيعية. جلسة ١٠ دقائق كافية.</p>
+      </div>
+
+      <!-- Buttons -->
+      <div class="grid grid-cols-2 gap-2 pt-2">
+        <button onclick="showView('recitation'); closeReport();" class="py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors">
+          جلسة جديدة
+        </button>
+        <button onclick="showView('progress'); closeReport();" class="py-2.5 border border-[var(--border)] rounded-xl text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" style="color:var(--text);">
+          عرض سجل التقدم
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- REMINDER MODAL -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div id="reminder-modal" class="hidden fixed inset-0 bg-black/40 z-60 items-center justify-center p-4" style="z-index:60;">
+  <div class="card w-full max-w-sm rounded-2xl p-5">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold" style="color:var(--text)">تنبيهات التذكير</h3>
+      <button onclick="toggleReminderModal()" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+        <i data-lucide="x" style="width:15px;height:15px;color:var(--text-muted);"></i>
+      </button>
+    </div>
+    <div class="space-y-3">
+      <div class="flex items-center justify-between p-3 rounded-xl" style="background:var(--slate-bg);">
+        <div>
+          <p class="text-sm font-semibold" style="color:var(--text)">بعد الفجر</p>
+          <p class="text-xs" style="color:var(--text-muted);">٠٥:٣٠ صباحاً</p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" checked class="sr-only peer">
+          <div class="w-10 h-5 bg-slate-200 dark:bg-slate-700 peer-checked:bg-emerald-500 rounded-full transition-colors"></div>
+          <div class="absolute right-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-[-20px] transition-transform"></div>
+        </label>
+      </div>
+      <div class="flex items-center justify-between p-3 rounded-xl" style="background:var(--slate-bg);">
+        <div>
+          <p class="text-sm font-semibold" style="color:var(--text)">بعد العصر</p>
+          <p class="text-xs" style="color:var(--text-muted);">٠٤:١٥ مساءً</p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" class="sr-only peer">
+          <div class="w-10 h-5 bg-slate-200 dark:bg-slate-700 peer-checked:bg-emerald-500 rounded-full transition-colors"></div>
+          <div class="absolute right-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-[-20px] transition-transform"></div>
+        </label>
+      </div>
+      <div class="flex items-center justify-between p-3 rounded-xl" style="background:var(--slate-bg);">
+        <div>
+          <p class="text-sm font-semibold" style="color:var(--text)">بعد المغرب</p>
+          <p class="text-xs" style="color:var(--text-muted);">٠٦:٤٥ مساءً</p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" checked class="sr-only peer">
+          <div class="w-10 h-5 bg-slate-200 dark:bg-slate-700 peer-checked:bg-emerald-500 rounded-full transition-colors"></div>
+          <div class="absolute right-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-[-20px] transition-transform"></div>
+        </label>
+      </div>
+      <button class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold mt-1 transition-colors">
+        إضافة وقت مخصص
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- MOBILE SURAH SIDEBAR -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div id="mobile-surah-sidebar" class="lg:hidden fixed top-14 right-0 bottom-0 w-80 glass border-l border-[var(--border)] z-50 transform translate-x-full transition-transform duration-300">
+  <div class="p-4 border-b border-[var(--border)] flex items-center justify-between">
+    <h3 class="font-bold" style="color:var(--text)">قائمة السور</h3>
+    <button onclick="toggleMobileSurahList()" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+      <i data-lucide="x" style="width:15px;height:15px;color:var(--text-muted);"></i>
+    </button>
+  </div>
+  <div class="p-3 border-b border-[var(--border)]">
+    <input type="text" placeholder="ابحث في السور..." oninput="filterSurahs(this.value)"
+      class="w-full px-3 py-2 rounded-lg text-sm border border-[var(--border)] focus:outline-none"
+      style="background:var(--slate-bg);color:var(--text);">
+  </div>
+  <div id="mobile-surah-list" class="overflow-y-auto h-[calc(100%-120px)] p-2"></div>
+</div>
+<div id="mobile-surah-overlay" class="lg:hidden hidden fixed inset-0 bg-black/30 z-45" onclick="toggleMobileSurahList()"></div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- JAVASCRIPT -->
+<!-- ═══════════════════════════════════════════════════ -->
+<script>
+// Init Lucide
+lucide.createIcons();
+
+// ─── DATA ───────────────────────────────────────────
+const surahs = [
+  {id:1,name:'الفاتحة',verses:7,type:'مكية',page:1,juz:1,hizb:1},
+  {id:2,name:'البقرة',verses:286,type:'مدنية',page:2,juz:1,hizb:1},
+  {id:3,name:'آل عمران',verses:200,type:'مدنية',page:50,juz:3,hizb:6},
+  {id:4,name:'النساء',verses:176,type:'مدنية',page:77,juz:4,hizb:8},
+  {id:5,name:'المائدة',verses:120,type:'مدنية',page:106,juz:6,hizb:11},
+  {id:6,name:'الأنعام',verses:165,type:'مكية',page:128,juz:7,hizb:14},
+  {id:7,name:'الأعراف',verses:206,type:'مكية',page:151,juz:8,hizb:16},
+  {id:8,name:'الأنفال',verses:75,type:'مدنية',page:177,juz:9,hizb:18},
+  {id:9,name:'التوبة',verses:129,type:'مدنية',page:187,juz:10,hizb:19},
+  {id:10,name:'يونس',verses:109,type:'مكية',page:208,juz:11,hizb:21},
+  {id:18,name:'الكهف',verses:110,type:'مكية',page:293,juz:15,hizb:30},
+  {id:36,name:'يس',verses:83,type:'مكية',page:440,juz:22,hizb:44},
+  {id:55,name:'الرحمن',verses:78,type:'مدنية',page:531,juz:27,hizb:53},
+  {id:67,name:'الملك',verses:30,type:'مكية',page:562,juz:29,hizb:57},
+  {id:78,name:'النبأ',verses:40,type:'مكية',page:582,juz:30,hizb:60},
+  {id:112,name:'الإخلاص',verses:4,type:'مكية',page:604,juz:30,hizb:60},
+  {id:113,name:'الفلق',verses:5,type:'مكية',page:604,juz:30,hizb:60},
+  {id:114,name:'الناس',verses:6,type:'مكية',page:604,juz:30,hizb:60},
+];
+
+// Tajweed page data
+const pageData = {
+  1: {
+    surah:{name:'الفاتحة',info:'مكية • ٧ آيات'},
+    juz:'١', hizb:'١',
+    hasBasmalah: true,
+    verses:[
+      {number:1,text:'ٱلۡحَمۡدُ لِلَّهِ رَبِّ ٱلۡعَٰلَمِينَ',
+        tajweed:[
+          {cls:'tj-madd-natural',word:2,tooltip:'مد طبيعي — لفظ الجلالة'},
+          {cls:'tj-madd-jaiz',word:5,tooltip:'مد جائز — العالمين'}
+        ]},
+      {number:2,text:'ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ',
+        tajweed:[
+          {cls:'tj-madd-natural',word:1,tooltip:'مد طبيعي — الرحمن'},
+          {cls:'tj-madd-natural',word:3,tooltip:'مد طبيعي — الرحيم'}
+        ]},
+      {number:3,text:'مَٰلِكِ يَوۡمِ ٱلدِّينِ',
+        tajweed:[
+          {cls:'tj-madd-jaiz',word:0,tooltip:'مد جائز ٢-٦ حركات'},
+          {cls:'tj-ikhfa',word:2,tooltip:'إخفاء — الدين'}
+        ]},
+      {number:4,text:'إِيَّاكَ نَعۡبُدُ وَإِيَّاكَ نَسۡتَعِينُ',
+        tajweed:[
+          {cls:'tj-madd-natural',word:0,tooltip:'مد طبيعي — إياك'},
+          {cls:'tj-madd-natural',word:3,tooltip:'مد طبيعي — إياك'}
+        ]},
+      {number:5,text:'ٱهۡدِنَا ٱلصِّرَٰطَ ٱلۡمُسۡتَقِيمَ',
+        tajweed:[
+          {cls:'tj-tafkhim',word:2,tooltip:'تفخيم — الصاد'},
+          {cls:'tj-madd-jaiz',word:2,tooltip:'مد جائز — الصراط'},
+          {cls:'tj-madd-natural',word:4,tooltip:'مد طبيعي — المستقيم'}
+        ]},
+      {number:6,text:'صِرَٰطَ ٱلَّذِينَ أَنۡعَمۡتَ عَلَيۡهِمۡ غَيۡرِ ٱلۡمَغۡضُوبِ عَلَيۡهِمۡ وَلَا ٱلضَّآلِّينَ',
+        tajweed:[
+          {cls:'tj-tafkhim',word:0,tooltip:'تفخيم — الصاد'},
+          {cls:'tj-madd-jaiz',word:0,tooltip:'مد جائز'},
+          {cls:'tj-ghunna',word:4,tooltip:'غنة — أنعمت'},
+          {cls:'tj-madd-wajib',word:10,tooltip:'مد واجب متصل — الضالين ٦ حركات'},
+          {cls:'tj-tafkhim',word:10,tooltip:'تفخيم — الضاد'}
+        ]},
+    ]
+  }
+};
+
+// ─── STATE ──────────────────────────────────────────
+let currentPage = 1;
+let currentFontSize = 24;
+let isDark = false;
+let tajweedEnabled = true;
+let isRecording = false;
+let isPlaying = false;
+let recTimerInterval = null;
+let recSeconds = 0;
+let currentView = 'dashboard';
+
+// ─── INIT ───────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  renderSurahList();
+  renderPage(1);
+  setActiveTab('dashboard');
+  initViewTabs();
+});
+
+function initViewTabs() {
+  const tabs = document.querySelectorAll('.view-tab');
+  tabs.forEach(t => {
+    t.style.color = 'var(--text-muted)';
+    t.style.fontWeight = '500';
+  });
+}
+
+// ─── VIEWS ──────────────────────────────────────────
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const el = document.getElementById('view-' + name);
+  if (el) el.classList.add('active');
+  currentView = name;
+  setActiveTab(name);
+
+  // Update bottom tabs
+  document.querySelectorAll('.btab').forEach(b => {
+    b.classList.toggle('active', b.dataset.view === name);
+  });
+  lucide.createIcons();
+}
+
+function setActiveTab(name) {
+  document.querySelectorAll('.view-tab').forEach(t => {
+    t.style.background = '';
+    t.style.color = 'var(--text-muted)';
+    t.style.fontWeight = '500';
+  });
+  const tab = document.getElementById('tab-' + name);
+  if (tab) {
+    tab.style.background = 'var(--card)';
+    tab.style.color = '#059669';
+    tab.style.fontWeight = '700';
+    tab.style.boxShadow = '0 1px 3px rgba(0,0,0,.1)';
+  }
+}
+
+// ─── SURAH LIST ─────────────────────────────────────
+function renderSurahList(data = surahs) {
+  const html = data.map(s => `
+    <button onclick="goToSurah(${s.id})" class="w-full flex items-center justify-between p-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors text-right">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-700 dark:text-emerald-400 font-bold text-xs flex-shrink-0">${s.id}</div>
+        <div>
+          <div class="font-semibold text-sm" style="color:var(--text);">${s.name}</div>
+          <div class="text-xs" style="color:var(--text-muted);">${s.verses} آية • ${s.type}</div>
+        </div>
+      </div>
+      <span class="text-xs" style="color:var(--text-muted);">ص${s.page}</span>
+    </button>
+  `).join('');
+  document.getElementById('surah-list').innerHTML = html;
+  const mob = document.getElementById('mobile-surah-list');
+  if (mob) mob.innerHTML = html;
+}
+
+function filterSurahs(q) {
+  const filtered = surahs.filter(s => s.name.includes(q));
+  renderSurahList(filtered);
+}
+
+function goToSurah(id) {
+  const s = surahs.find(x => x.id === id);
+  if (!s) return;
+  goToPage(s.page);
+  showView('mushaf');
+  // close mobile sidebar if open
+  const mob = document.getElementById('mobile-surah-sidebar');
+  if (mob && !mob.classList.contains('translate-x-full')) toggleMobileSurahList();
+}
+
+// ─── PAGE RENDER ─────────────────────────────────────
+function renderPage(page) {
+  currentPage = page;
+  const data = pageData[page] || pageData[1];
+  
+  // Update UI
+  document.getElementById('current-page-num').textContent = toArabicNum(page);
+  const pj = document.getElementById('page-jump');
+  if (pj) pj.value = page;
+  document.getElementById('banner-surah-name').textContent = data.surah.name;
+  document.getElementById('banner-surah-info').textContent = data.surah.info;
+  document.getElementById('banner-juz').textContent = data.juz;
+  document.getElementById('banner-hizb').textContent = data.hizb;
+  document.getElementById('info-juz').textContent = data.juz;
+  document.getElementById('info-hizb').textContent = data.hizb;
+  document.getElementById('footer-juz').textContent = `الجزء ${data.juz}`;
+  document.getElementById('footer-hizb').textContent = `الحزب ${data.hizb}`;
+  document.getElementById('footer-page').textContent = toArabicNum(page);
+  document.getElementById('basmalah').style.display = data.hasBasmalah ? 'block' : 'none';
+
+  // Render verses
+  const container = document.getElementById('verses-container');
+  container.innerHTML = data.verses.map(v => {
+    const words = v.text.split(' ');
+    const wordSpans = words.map((word, i) => {
+      const rule = tajweedEnabled ? (v.tajweed || []).find(t => t.word === i) : null;
+      const cls = rule ? rule.cls : '';
+      const tooltip = rule ? `<span class="tj-tooltip">${rule.tooltip}</span>` : '';
+      return `<span class="verse-word ${cls}" onclick="showVerseModal(${v.number},'${escapeHtml(v.text)}')">${word}${tooltip}</span>`;
+    }).join(' ');
+    return `<span class="inline">${wordSpans} <span class="verse-number" onclick="showVerseModal(${v.number},'${escapeHtml(v.text)}')">﴿${toArabicNum(v.number)}﴾</span> </span>`;
+  }).join('\n');
+
+  container.style.fontSize = currentFontSize + 'px';
+  lucide.createIcons();
+}
+
+function prevPage() {
+  if (currentPage > 1) renderPage(currentPage - 1);
+}
+function nextPage() {
+  if (currentPage < 604) renderPage(currentPage + 1);
+}
+function goToPage(p) {
+  p = parseInt(p);
+  if (p >= 1 && p <= 604) renderPage(p);
+}
+
+// ─── TAJWEED TOGGLE ──────────────────────────────────
+function toggleTajweedColors() {
+  tajweedEnabled = !tajweedEnabled;
+  const btn = document.getElementById('tajweed-btn');
+  if (tajweedEnabled) {
+    btn.style.borderColor = '#059669';
+    btn.style.color = '#059669';
+    btn.style.background = '#ecfdf5';
+  } else {
+    btn.style.borderColor = 'var(--border)';
+    btn.style.color = 'var(--text-muted)';
+    btn.style.background = '';
+  }
+  renderPage(currentPage);
+  document.getElementById('tajweed-legend').style.opacity = tajweedEnabled ? '1' : '.3';
+}
+
+// ─── FONT SIZE ───────────────────────────────────────
+function changeFontSize(delta) {
+  currentFontSize = Math.min(36, Math.max(16, currentFontSize + delta));
+  document.getElementById('verses-container').style.fontSize = currentFontSize + 'px';
+  document.getElementById('font-display').textContent = toArabicNum(currentFontSize);
+}
+
+// ─── AUDIO / RECORDING ──────────────────────────────
+function togglePlay() {
+  isPlaying = !isPlaying;
+  const btn = document.getElementById('play-btn');
+  btn.innerHTML = isPlaying
+    ? '<i data-lucide="pause" style="width:16px;height:16px;"></i>'
+    : '<i data-lucide="play" style="width:16px;height:16px;margin-right:-1px;"></i>';
+  lucide.createIcons();
+}
+
+function toggleRecording() {
+  // Feature coming soon — show early access banner instead
+  document.getElementById('early-access-banner')?.scrollIntoView({behavior:'smooth'});
+  const toast = document.createElement('div');
+  toast.className = 'fixed bottom-20 lg:bottom-4 right-4 bg-slate-800 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-lg z-50 fade-in';
+  toast.textContent = '🎙️ ميزة التصحيح الصوتي قادمة قريباً';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+function selectReciter(val, el) {
+  document.querySelectorAll('.reciter-btn').forEach(b => {
+    b.classList.remove('border-emerald-500','bg-emerald-50','dark:bg-emerald-900/20','text-emerald-700');
+    b.style.color = 'var(--text)';
+  });
+  el.classList.add('border-emerald-500','bg-emerald-50','text-emerald-700');
+}
+
+// ─── VERSE MODAL ─────────────────────────────────────
+function showVerseModal(num, text) {
+  document.getElementById('modal-verse-num').textContent = toArabicNum(num);
+  document.getElementById('modal-verse-text').textContent = text;
+  document.getElementById('modal-extra').classList.add('hidden');
+  document.getElementById('verse-modal').classList.add('open');
+}
+function closeVerseModal() {
+  document.getElementById('verse-modal').classList.remove('open');
+}
+function playVerseAudio(reciter) {
+  // In production: build everyayah.com URL
+  alert(`ستُشغَّل الآية بصوت ${reciter} (يتطلب الاتصال بالخادم)`);
+}
+function showTranslation() {
+  const el = document.getElementById('modal-extra');
+  el.textContent = 'All praise is due to Allah, Lord of the worlds. The Entirely Merciful, the Especially Merciful.';
+  el.classList.remove('hidden');
+}
+function showTafsir() {
+  const el = document.getElementById('modal-extra');
+  el.textContent = 'الحمد لله: الثناء الكامل على الله وحده بجميع صفاته، وهو ربّ العالمين أي مالكهم ومدبّر أمرهم.';
+  el.classList.remove('hidden');
+}
+
+// ─── REPORT MODAL ────────────────────────────────────
+function showSessionReport() {
+  document.getElementById('report-modal').classList.add('open');
+}
+function closeReport() {
+  document.getElementById('report-modal').classList.remove('open');
+}
+
+// ─── CHAT ────────────────────────────────────────────
+function openChat() {
+  document.getElementById('chat-panel').classList.add('open');
+  document.getElementById('chat-overlay').classList.remove('hidden');
+  document.getElementById('chat-input').focus();
+}
+function closeChat() {
+  document.getElementById('chat-panel').classList.remove('open');
+  document.getElementById('chat-overlay').classList.add('hidden');
+}
+function askChatQuestion(q) {
+  document.getElementById('chat-input').value = q;
+  sendChatMessage();
+}
+function chatKeyDown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+}
+
+const tajweedResponses = {
+  'مد': 'المد هو إطالة الصوت بأحد حروف المد (الألف، الواو، الياء). وينقسم إلى: مد طبيعي (٢ حركة) ومد فرعي يتراوح بين ٢-٦ حركات حسب السبب.',
+  'واجب': 'المد الواجب المتصل: هو أن يكون حرف المد والهمزة في نفس الكلمة، ويمد ٤ أو ٥ حركات وجوباً. مثاله: "جاء"، "شاء".',
+  'قلقلة': 'القلقلة: صوت ارتجاجي يحدث عند النطق بأحد حروفها ساكنة. وحروفها خمسة: (ق ط ب ج د)، اجمعها في "قطب جد". تكون القلقلة صغرى عند الوصل وكبرى عند الوقف.',
+  'غنة': 'الغنة: صوت أنفي يخرج من الخيشوم، ومقداره حركتان. تلازم النون والميم المشددتين دائماً، وتظهر في أحكام: الإدغام بغنة، والإخفاء، والإقلاب.',
+  'إخفاء': 'الإخفاء الحقيقي: إخفاء النون الساكنة أو التنوين عند ١٥ حرفاً، مع إبقاء الغنة. وحروف الإخفاء هي: (ص ذ ث ك ج ش ق س د ط ز ف ت ض ظ).',
+  'إدغام': 'الإدغام: إدخال النون الساكنة أو التنوين في الحرف التالي حتى يصيرا حرفاً واحداً مشدداً. حروفه: (ي ر م ل و ن) — ينمو. ينقسم إلى إدغام بغنة وإدغام بلا غنة.',
+  'default': 'سؤال وجيه في علم التجويد! يمكنني مساعدتك في أحكام المد، والغنة، والقلقلة، والوقف والابتداء، وأحكام النون والميم الساكنتين. ما الحكم الذي تودّ التعمق فيه؟'
+};
+
+async function sendChatMessage() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  addChatBubble(msg, 'user');
+
+  const typingId = 'typing-' + Date.now();
+  document.getElementById('chat-messages').insertAdjacentHTML('beforeend',
+    `<div id="${typingId}" class="flex gap-3">
+      <div class="w-7 h-7 bg-gradient-to-br from-violet-500 to-purple-700 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+        <i data-lucide="bot" style="width:13px;height:13px;color:white;"></i>
+      </div>
+      <div class="chat-hafiz p-3"><span style="color:var(--text-muted)">يكتب...</span></div>
+    </div>`);
+  scrollChat();
+  lucide.createIcons();
+
+  const maxAttempts = 3;
+  let attempts = 0;
+
+  while (attempts < maxAttempts) {
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 1000,
+          system: `أنت "حافظ"، مساعد تجويدي متخصص في علم التجويد وأحكامه. أجب دائماً باللغة العربية الفصحى بأسلوب علمي دقيق. اشرح الأحكام التجويدية بوضوح مع ذكر الأمثلة القرآنية. لا تتجاوز علم التجويد وعلوم القرآن.`,
+          messages: [{ role: 'user', content: msg }]
+        })
+      });
+
+      if (response.status === 529 || response.status === 503 || response.status === 500) {
+        attempts++;
+        if (attempts < maxAttempts) {
+          const wait = 4000 * attempts;
+          const statusEl = document.querySelector(`#${typingId} div:last-child span`);
+          if (statusEl) statusEl.textContent = `جاري المحاولة... (${attempts}/${maxAttempts})`;
+          await new Promise(r => setTimeout(r, wait));
+          continue;
+        }
+        throw new Error('overloaded');
+      }
+
+      const data = await response.json();
+      document.getElementById(typingId)?.remove();
+      const reply = data.content?.[0]?.text || findLocalResponse(msg);
+      addChatBubble(reply, 'hafiz');
+      return;
+
+    } catch (err) {
+      attempts++;
+      if (attempts >= maxAttempts) {
+        document.getElementById(typingId)?.remove();
+        addChatBubble(findLocalResponse(msg), 'hafiz');
+        return;
+      }
+      await new Promise(r => setTimeout(r, 4000 * attempts));
+    }
+  }
+}
+
+function findLocalResponse(msg) {
+  for (const [key, val] of Object.entries(tajweedResponses)) {
+    if (key !== 'default' && msg.includes(key)) return val;
+  }
+  return tajweedResponses.default;
+}
+
+function submitEarlyAccess() {
+  const email = document.getElementById('early-email').value.trim();
+  if (!email || !email.includes('@')) {
+    alert('يرجى إدخال بريد إلكتروني صحيح');
+    return;
+  }
+  const list = JSON.parse(localStorage.getItem('earlyAccess') || '[]');
+  list.push({ email, date: new Date().toISOString() });
+  localStorage.setItem('earlyAccess', JSON.stringify(list));
+  document.getElementById('early-success').classList.remove('hidden');
+  document.getElementById('early-email').value = '';
+}
+
+function addChatBubble(text, sender) {
+  const isHafiz = sender === 'hafiz';
+  const html = isHafiz
+    ? `<div class="flex gap-3 fade-in">
+        <div class="w-7 h-7 bg-gradient-to-br from-violet-500 to-purple-700 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+          <i data-lucide="bot" style="width:13px;height:13px;color:white;"></i>
+        </div>
+        <div class="chat-hafiz p-3 max-w-[85%]"><p class="text-sm leading-relaxed" style="color:var(--text);">${text}</p></div>
+      </div>`
+    : `<div class="flex justify-start flex-row-reverse fade-in">
+        <div class="chat-user p-3 max-w-[85%]"><p class="text-sm leading-relaxed">${text}</p></div>
+      </div>`;
+  document.getElementById('chat-messages').insertAdjacentHTML('beforeend', html);
+  scrollChat();
+  lucide.createIcons();
+}
+
+function scrollChat() {
+  const m = document.getElementById('chat-messages');
+  m.scrollTop = m.scrollHeight;
+}
+
+// ─── THEME ───────────────────────────────────────────
+function toggleTheme() {
+  isDark = !isDark;
+  document.documentElement.classList.toggle('dark', isDark);
+  document.getElementById('icon-moon').classList.toggle('hidden', isDark);
+  document.getElementById('icon-sun').classList.toggle('hidden', !isDark);
+}
+
+// ─── LANG ────────────────────────────────────────────
+function toggleLang() {
+  alert('اللغة الإنجليزية — قريباً');
+}
+
+// ─── REMINDERS ───────────────────────────────────────
+function toggleReminderModal() {
+  const m = document.getElementById('reminder-modal');
+  m.classList.toggle('hidden');
+  m.classList.toggle('flex');
+}
+
+// ─── NOTIFICATIONS ───────────────────────────────────
+function toggleNotifPanel() {
+  alert('لا توجد تنبيهات جديدة حالياً');
+}
+
+// ─── USER MENU ───────────────────────────────────────
+function toggleUserMenu() {
+  document.getElementById('user-menu').classList.toggle('hidden');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#user-menu') && !e.target.closest('[onclick="toggleUserMenu()"]')) {
+    document.getElementById('user-menu')?.classList.add('hidden');
+  }
+});
+
+// ─── MOBILE SURAH SIDEBAR ────────────────────────────
+function toggleMobileSurahList() {
+  const sb = document.getElementById('mobile-surah-sidebar');
+  const ov = document.getElementById('mobile-surah-overlay');
+  sb.classList.toggle('translate-x-full');
+  ov.classList.toggle('hidden');
+}
+
+// ─── BOOKMARK ────────────────────────────────────────
+function addBookmark() {
+  const toast = document.createElement('div');
+  toast.className = 'fixed bottom-20 lg:bottom-4 right-4 bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-lg z-50 fade-in';
+  toast.textContent = '✅ تم حفظ الصفحة في المفضلة';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2500);
+}
+
+// ─── TAJWEED MUSHAF MODE ─────────────────────────────
+function openTajweedMushaf() {
+  tajweedEnabled = true;
+  showView('mushaf');
+  // Ensure legend is visible
+  document.getElementById('tajweed-legend').style.opacity = '1';
+}
+
+// ─── MEMORIZATION MODE ───────────────────────────────
+function showMemMode() {
+  showView('recitation');
+  alert('وضع الحفظ: سيتم إخفاء الآيات تدريجياً لاختبار حفظك — قريباً');
+}
+
+// ─── HELPERS ─────────────────────────────────────────
+function toArabicNum(n) {
+  return String(n).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+}
+function escapeHtml(t) {
+  return t.replace(/'/g,"&#39;").replace(/"/g,"&quot;");
+}
+</script>
+</body>
+</html>
