@@ -2,8 +2,9 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
-  "rewrites": [
-    { "source": "/maqraa", "destination": "/maqraa.html" },
-    { "source": "/((?!maqraa\\.html|maqraa).*)", "destination": "/index.html" }
+  "routes": [
+    { "src": "/maqraa.html", "dest": "/maqraa.html" },
+    { "src": "/maqraa", "dest": "/maqraa.html" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
