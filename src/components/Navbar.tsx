@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export function Navbar() {
   return (
     // dir="rtl" explicit — logo anchors to the right, CTA lands at far left
@@ -14,7 +16,7 @@ export function Navbar() {
 
         {/* Links + CTA — second in DOM = leftmost group in RTL.
             Inside this flex row, items also flow RTL:
-            المميزات (right) → كيف يعمل (center) → ابدأ الآن (far left) */}
+            المميزات (right) → كيف يعمل (center) → تسجيل الدخول → ابدأ الآن (far left) */}
         <div className="flex items-center gap-7">
           <a
             href="#features"
@@ -30,6 +32,13 @@ export function Navbar() {
           >
             كيف يعمل
           </a>
+          <Link
+            to="/login"
+            className="text-stone-600 hover:text-emerald-800 transition-colors font-medium"
+            style={{ fontFamily: "Noto Sans Arabic, sans-serif", fontSize: "0.95rem" }}
+          >
+            تسجيل الدخول
+          </Link>
           {/* CTA — last in DOM = far left in RTL */}
           <a
             href="https://hafiz-app-seven.vercel.app"
